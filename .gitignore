@@ -2,6 +2,7 @@
 # IAR object
 *.o
 *.pbi
+*.xcl
 # Windows image file caches
 Thumbs.db
 ehthumbs.db
