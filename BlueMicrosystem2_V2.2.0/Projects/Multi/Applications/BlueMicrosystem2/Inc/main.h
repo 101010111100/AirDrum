@@ -74,25 +74,9 @@ extern void Set4GAccelerometerFullScale(void);
 #define DEFAULT_uhCCR1_Val  100
 /* Code for MotionFX and MotionGR integration - End Section */
 
-/* Code for MotionCP integration - Start Section */
-/* 10kHz/50 For MotionCP@50Hz as defaul value */
-#define DEFAULT_uhCCR2_Val  200
-/* Code for MotionCP integration - End Section */
-
-/* Code for MotionAR integration - Start Section */
-/* 10kHz/16  For MotionAR@16Hz as defaul value */
-#define DEFAULT_uhCCR3_Val  625
-/* Code for MotionAR integration - End Section */
-
-//10kHz/20  For Acc/Gyro/Mag@20Hz
-#define DEFAULT_uhCCR4_Val  500
-
 #ifndef STM32_NUCLEO
   #define BLUEMSYS_CHECK_JUMP_TO_BOOTLOADER ((uint32_t)0x12345678)
 #endif /* STM32_NUCLEO */
-
-extern uint8_t BufferToWrite[256];
-extern int32_t BytesToWrite;
 
 #endif /* __MAIN_H */
 
