@@ -25,7 +25,7 @@ if not "%~1" == "" goto debugFile
 
 @echo on 
 
-"C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.5\common\bin\cspybat" -f "D:\2.tempPjt\171.SensorTile Drum set\6.git AirDrum\AirDrum\BlueMicrosystem2_V2.2.0\Projects\Multi\Applications\BlueMicrosystem2\EWARM\STM32L476RG-SensorTile\settings\Project.STM32L476RG_SENSORTILE.general.xcl" --backend -f "D:\2.tempPjt\171.SensorTile Drum set\6.git AirDrum\AirDrum\BlueMicrosystem2_V2.2.0\Projects\Multi\Applications\BlueMicrosystem2\EWARM\STM32L476RG-SensorTile\settings\Project.STM32L476RG_SENSORTILE.driver.xcl" 
+"C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.5\common\bin\cspybat" -f "D:\2.tempPjt\171.SensorTile Drum set\6.git AirDrum\AirDrum\1.SensorTile\BlueMicrosystem2_V2.2.0\Projects\Multi\Applications\BlueMicrosystem2\EWARM\STM32L476RG-SensorTile\settings\Project.STM32L476RG_SENSORTILE.general.xcl" --backend -f "D:\2.tempPjt\171.SensorTile Drum set\6.git AirDrum\AirDrum\1.SensorTile\BlueMicrosystem2_V2.2.0\Projects\Multi\Applications\BlueMicrosystem2\EWARM\STM32L476RG-SensorTile\settings\Project.STM32L476RG_SENSORTILE.driver.xcl" 
 
 @echo off 
 goto end 
@@ -34,7 +34,7 @@ goto end
 
 @echo on 
 
-"C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.5\common\bin\cspybat" -f "D:\2.tempPjt\171.SensorTile Drum set\6.git AirDrum\AirDrum\BlueMicrosystem2_V2.2.0\Projects\Multi\Applications\BlueMicrosystem2\EWARM\STM32L476RG-SensorTile\settings\Project.STM32L476RG_SENSORTILE.general.xcl" "--debug_file=%~1" --backend -f "D:\2.tempPjt\171.SensorTile Drum set\6.git AirDrum\AirDrum\BlueMicrosystem2_V2.2.0\Projects\Multi\Applications\BlueMicrosystem2\EWARM\STM32L476RG-SensorTile\settings\Project.STM32L476RG_SENSORTILE.driver.xcl" 
+"C:\Program Files (x86)\IAR Systems\Embedded Workbench 7.5\common\bin\cspybat" -f "D:\2.tempPjt\171.SensorTile Drum set\6.git AirDrum\AirDrum\1.SensorTile\BlueMicrosystem2_V2.2.0\Projects\Multi\Applications\BlueMicrosystem2\EWARM\STM32L476RG-SensorTile\settings\Project.STM32L476RG_SENSORTILE.general.xcl" "--debug_file=%~1" --backend -f "D:\2.tempPjt\171.SensorTile Drum set\6.git AirDrum\AirDrum\1.SensorTile\BlueMicrosystem2_V2.2.0\Projects\Multi\Applications\BlueMicrosystem2\EWARM\STM32L476RG-SensorTile\settings\Project.STM32L476RG_SENSORTILE.driver.xcl" 
 
 @echo off 
 :end
