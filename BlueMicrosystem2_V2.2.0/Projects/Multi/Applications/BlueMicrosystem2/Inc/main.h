@@ -57,25 +57,6 @@
 #include "osx_motion_fx.h"
 /* Code for MotionFX integration - End Section */
 
-/* Code for MotionAR integration - Start Section */
-#include "MotionAR_Manager.h"
-#include "osx_motion_ar.h"
-/* Code for MotionAR integration - End Section */
-    
-/* Code for MotionCP integration - Start Section */
-#include "MotionCP_Manager.h"
-#include "osx_motion_cp.h"
-/* Code for MotionCP integration - End Section */
-
-/* Code for MotionGR integration - Start Section */
-#include "MotionGR_Manager.h"
-#include "osx_motion_gr.h"
-/* Code for MotionGR integration - End Section */
-
-#ifdef OSX_BMS_ACOUSTIC_SOURCE_LOCALIZATION
-#include "AcousticSL_Manager.h"
-#include "osx_acoustic_sl.h"
-#endif /* OSX_BMS_ACOUSTIC_SOURCE_LOCALIZATION */
 
 /* Exported macro ------------------------------------------------------------*/
 #define MCR_BLUEMS_F2I_1D(in, out_int, out_dec) {out_int = (int32_t)in; out_dec= (int32_t)((in-out_int)*10);};

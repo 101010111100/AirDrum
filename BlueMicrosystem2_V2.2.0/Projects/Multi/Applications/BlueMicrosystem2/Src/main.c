@@ -181,22 +181,11 @@
 
 #define BLUEMSYS_N_BUTTON_PRESS 3
 #define BLUEMSYS_CHECK_CALIBRATION ((uint32_t)0x12345678)
+#define MAC_ADDRESS                 0x12, 0x34, 0x00, 0xE1, 0x80, 0x03
+#define ADVERTISING_INTERVAL_INCREMENT (16)
 
 /* Imported Variables -------------------------------------------------------------*/
 extern uint8_t set_connectable;
-extern int connected;
-
-/* Code for MotionAR integration - Start Section */
-extern osx_MAR_output_t ActivityCode;
-/* Code for MotionAR integration - End Section */
-
-/* Code for MotionCP integration - Start Section */
-extern osx_MCP_output_t CarryPositionCode;
-/* Code for MotionCP integration - End Section */
-
-/* Code for MotionGR integration - Start Section */
-extern osx_MGR_output_t GestureRecognitionCode;
-/* Code for MotionGR integration - End Section */
 
 #ifdef STM32_SENSORTILE
   #ifdef OSX_BMS_ENABLE_PRINTF
@@ -322,8 +311,6 @@ static volatile uint32_t UpdateMotionCP  =0;
 static volatile uint32_t UpdateMotionGR  =0;
 /* Code for MotionGR integration - End Section */
 
-/* Code for BlueVoice integration - Start Section */
-static uint16_t num_byte_sent = 0;
 /* Code for BlueVoice integration - End Section */
 
 #ifdef OSX_BMS_ACOUSTIC_SOURCE_LOCALIZATION
@@ -337,39 +324,22 @@ static unsigned char isCal = 0;
 /* Private function prototypes -----------------------------------------------*/
 static void SystemClock_Config(void);
 
-static void Init_BlueNRG_Custom_Services(void);
-static void Init_BlueNRG_Stack(void);
 
 static unsigned char SaveCalibrationToMemory(uint32_t *MagnetoCalibration);
 static unsigned char ResetCalibrationInMemory(uint32_t *MagnetoCalibration);
 static unsigned char ReCallCalibrationFromMemory(uint32_t *MagnetoCalibration);
 
 static void InitTimers(void);
-static void SendEnvironmentalData(void);
-static void MEMSCallback(void);
-static void ReCalibration(void);
-static void ButtonCallback(void);
-static void SendMotionData(void);
-static void SendAudioLevelData(void);
 
 void AudioProcess(void);
 void StartTimer(void);
+tBleStatus Beacon_Init(void);
+void BlueNRG_Init(void);
+tBleStatus UpdateAdvStr(uint8_t * buf);
 
 /* Code for MotionFX integration - Start Section */
 static void ComputeQuaternions(void);
 /* Code for MotionFX integration - End Section */
-
-/* Code for MotionAR integration - Start Section */
-static void ComputeMotionAR(void);
-/* Code for MotionAR integration - End Section */
-
-/* Code for MotionCP integration - Start Section */
-static void ComputeMotionCP(void);
-/* Code for MotionCP integration - End Section */
-
-/* Code for MotionGR integration - Start Section */
-static void ComputeMotionGR(void);
-/* Code for MotionGR integration - End Section */
 
 #ifdef OSX_BMS_ACOUSTIC_SOURCE_LOCALIZATION
 static void SendAudioSourceLocalizationData(void);
@@ -410,43 +380,6 @@ int main(void)
             MCR_OSX_COPY_LICENSE_FROM_MDM(osx_mfx_license,PayLoad->osxLicense);
             MotionFX_License_init(PayLoad);
           break;
-          /* Code for MotionFX integration - End Section */
-          
-          /* Code for MotionAR integration - Start Section */
-          case OSX_MOTION_AR:
-            MCR_OSX_COPY_LICENSE_FROM_MDM(osx_mar_license,PayLoad->osxLicense);
-            MotionAR_License_init(PayLoad);
-          break;
-          /* Code for MotionAR integration - End Section */
-         
-          /* Code for MotionCP integration - Start Section */
-          case OSX_MOTION_CP:
-            MCR_OSX_COPY_LICENSE_FROM_MDM(osx_mcp_license,PayLoad->osxLicense);
-            MotionCP_License_init(PayLoad);
-          break;
-          /* Code for MotionCP integration - End Section */
-          
-          /* Code for MotionGR integration - Start Section */
-          case OSX_MOTION_GR:
-            MCR_OSX_COPY_LICENSE_FROM_MDM(osx_mgr_license,PayLoad->osxLicense);
-            MotionGR_License_init(PayLoad);
-          break;
-          /* Code for MotionGR integration - End Section */
-          
-#ifdef OSX_BMS_ACOUSTIC_SOURCE_LOCALIZATION
-          case OSX_ACOUSTIC_SL:
-            MCR_OSX_COPY_LICENSE_FROM_MDM(osx_asl_license,PayLoad->osxLicense);
-            AcousticSL_License_init(PayLoad);
-          break;
-#endif /* OSX_BMS_ACOUSTIC_SOURCE_LOCALIZATION */
-          
-          /* Code for BlueVoice integration - Start Section */
-          case OSX_AUDIO_BV:
-            MCR_OSX_COPY_LICENSE_FROM_MDM(osx_bv_license,PayLoad->osxLicense);
-            AudioBV_License_init(PayLoad);
-          break;
-          /* Code for BlueVoice integration - End Section */
-
           default:
             /* Only for removing the GCC warning */
             OSX_BMS_PRINTF("Should never reach this point...\r\n");
@@ -459,36 +392,6 @@ int main(void)
           /* Code for MotionFX integration - Start Section */
           case OSX_MOTION_FX:
             MotionFX_License_init(PayLoad);
-          break;
-          /* Code for MotionFX integration - End Section */
-          
-          /* Code for MotionAR integration - Start Section */
-          case OSX_MOTION_AR:
-            MotionAR_License_init(PayLoad);
-          break;
-          /* Code for MotionAR integration - End Section */
-         
-          /* Code for MotionCP integration - Start Section */
-          case OSX_MOTION_CP:
-            MotionCP_License_init(PayLoad);
-          break;
-          /* Code for MotionCP integration - End Section */
-          
-          /* Code for MotionGR integration - Start Section */
-          case OSX_MOTION_GR:
-            MotionGR_License_init(PayLoad);
-          break;
-          /* Code for MotionGR integration - End Section */
-          
-#ifdef OSX_BMS_ACOUSTIC_SOURCE_LOCALIZATION
-          case OSX_ACOUSTIC_SL:
-            AcousticSL_License_init(PayLoad);
-          break;
-#endif /* OSX_BMS_ACOUSTIC_SOURCE_LOCALIZATION */
-          
-          /* Code for BlueVoice integration - Start Section */
-          case OSX_AUDIO_BV:
-            AudioBV_License_init(PayLoad);
           break;
           /* Code for BlueVoice integration - End Section */
         }
@@ -532,12 +435,19 @@ int main(void)
   OSX_BMS_PRINTF("Debug Notify Trasmission Enabled\r\n");
 #endif /* OSX_BMS_DEBUG_NOTIFY_TRAMISSION */
 
-  /* Initialize the BlueNRG */
-  Init_BlueNRG_Stack();
+  /* Initialize the BlueNRG SPI driver */
+  BNRG_SPI_Init();
 
-  /* Initialize the BlueNRG Custom services */
-  Init_BlueNRG_Custom_Services();  
-
+  /* Initialize the BlueNRG HCI */
+  HCI_Init();
+    
+  /* Reset BlueNRG hardware */
+  BlueNRG_RST();
+  
+  BlueNRG_Init();
+  
+  Beacon_Init();
+  
   if(TargetBoardFeatures.HWAdvanceFeatures) {
     InitHWFeatures();
   }
@@ -560,10 +470,19 @@ int main(void)
 	}
   }
   StartTimer();
+  MDM_PayLoadLic_t *PayLoad;
+  /* Code for MotionFX integration - Start Section */    
+  /* Initialize MotionFX library */
+  PayLoad = (MDM_PayLoadLic_t *) MDM_LicTable[OSX_MOTION_FX].Address;
+  if(PayLoad) {
+     if((PayLoad->osxLicenseInitialized) & (TargetBoardFeatures.osxMotionFXIsInitalized==0)){
+      MotionFX_manager_init();
+      MotionFX_manager_start_9X();
+    }
+  }
   /* Infinite loop */
   while (1){
-    /* Led Blinking when there is not a client connected */
-    if(!connected) {
+    
       if(!TargetBoardFeatures.LedStatus) {
         if(!(HAL_GetTick()&0x3FF)) {
           LedOnTargetPlatform();
@@ -573,191 +492,21 @@ int main(void)
           LedOffTargetPlatform();
         }
       }
-    }
-
-    if(set_connectable){
-	  MDM_PayLoadLic_t *PayLoad;
-      /* Initializes the osx libraries if there is a valid license */
-      
-      /* Code for MotionFX integration - Start Section */    
-      /* Initialize MotionFX library */
-      PayLoad = (MDM_PayLoadLic_t *) MDM_LicTable[OSX_MOTION_FX].Address;
-      if(PayLoad) {
-         if((PayLoad->osxLicenseInitialized) & (TargetBoardFeatures.osxMotionFXIsInitalized==0)){
-          MotionFX_manager_init();
-          MotionFX_manager_start_9X();
-        }
-      }
-      /* Code for MotionFX integration - End Section */
-      
-      /* Code for MotionAR integration - Start Section */
-      /* Initialize MotionAR Library */
-      PayLoad = (MDM_PayLoadLic_t *) MDM_LicTable[OSX_MOTION_AR].Address;
-      if(PayLoad) {
-        if((PayLoad->osxLicenseInitialized) & (TargetBoardFeatures.osxMotionARIsInitalized==0)){
-          MotionAR_manager_init();
-        }
-      }
-      /* Code for MotionAR integration - End Section */
-      
-      /* Code for MotionCP integration - Start Section */
-      /* Initialize MotionCP Library */
-      PayLoad = (MDM_PayLoadLic_t *) MDM_LicTable[OSX_MOTION_CP].Address;
-      if(PayLoad) {
-        if((PayLoad->osxLicenseInitialized) & (TargetBoardFeatures.osxMotionCPIsInitalized==0)){
-          MotionCP_manager_init();
-        }
-      }
-      /* Code for MotionCP integration - End Section */
-
-      /* Code for MotionGR integration - Start Section */
-      /* Initialize MotionGR Library */
-      PayLoad = (MDM_PayLoadLic_t *) MDM_LicTable[OSX_MOTION_GR].Address;
-      if(PayLoad) {
-        if((PayLoad->osxLicenseInitialized) & (TargetBoardFeatures.osxMotionGRIsInitalized==0)){
-          MotionGR_manager_init();
-        }
-      }
-      /* Code for MotionGR integration - End Section */
-      
-#ifdef OSX_BMS_ACOUSTIC_SOURCE_LOCALIZATION
-      /* Initialize AcousticSL Library */
-      PayLoad = (MDM_PayLoadLic_t *) MDM_LicTable[OSX_ACOUSTIC_SL].Address;
-      if(PayLoad) {
-        if((PayLoad->osxLicenseInitialized) & (TargetBoardFeatures.osxAcousticSLIsInitalized==0)){
-          AcousticSL_Manager_init();
-        }
-      }
-#endif /* OSX_BMS_ACOUSTIC_SOURCE_LOCALIZATION */
-
-      /* Code for BlueVoice integration - Start Section */
-      /* Initialize BlueVoice Library */
-      PayLoad = (MDM_PayLoadLic_t *) MDM_LicTable[OSX_AUDIO_BV].Address;
-      if(PayLoad) {
-        if((PayLoad->osxLicenseInitialized) & (TargetBoardFeatures.osxAudioBVIsInitalized==0)){
-          AudioBV_Manager_init();
-        }
-      }
-      /* Code for BlueVoice integration - End Section */
-
-      if(NecessityToSaveMetaDataManager) {
-        uint32_t Success = EraseMetaDataManager();
-        if(Success) {
-          SaveMetaDataManager();
-        }
-      }
-
-      /* Now update the BLE advertize data and make the Board connectable */
-      setConnectable();
-      set_connectable = FALSE;
-      
-#ifdef USE_STM32F4XX_NUCLEO
-        //BSP_AUDIO_IN_Record(PDM_Buffer, 0);
-#endif /* USE_STM32F4XX_NUCLEO */
-
-    }
-    
-    /* Handle Interrupt from MEMS */
-    if(MEMSInterrupt) {
-      MEMSCallback();
-      MEMSInterrupt=0;
-    }
-
-    /* Handle user button */
-    if(ButtonPressed) {
-      ButtonCallback();
-      ButtonPressed=0;       
-    }
-
-    /* Handle Re-Calibration */
-    if(ForceReCalibration) {
-      ForceReCalibration=0;
-      ReCalibration();
-    }
-
-    /* handle BLE event */
-    if(HCI_ProcessEvent) {
-      HCI_ProcessEvent=0;
       HCI_Process();
-    }
-
-    /* Environmental Data */
-    if(SendEnv) {
-      SendEnv=0;
-      SendEnvironmentalData();
-    }
-    
-    /* Mic Data */
-    if (SendAudioLevel) {
-      SendAudioLevel = 0;
-      SendAudioLevelData();
-    }
-
-    /* Motion Data */
-    if(SendAccGyroMag) {
-      SendAccGyroMag=0;
-      SendMotionData();
-    }
-
-    /* Code for MotionFX integration - Start Section */
-    if(Quaternion) {
-      Quaternion=0;
-      ComputeQuaternions();
-    }
-    /* Code for MotionFX integration - End Section */
-
-    /* Code for MotionAR integration - Start Section */
-    if(UpdateMotionAR) {
-      UpdateMotionAR=0;
-      ComputeMotionAR();
-    }
-    /* Code for MotionAR integration - End Section */
-    
-    /* Code for MotionCP integration - Start Section */
-    if(UpdateMotionCP) {
-      UpdateMotionCP=0;
-      ComputeMotionCP();
-    }
-    /* Code for MotionCP integration - End Section */
-
-    /* Code for MotionGR integration - Start Section */
-    if(UpdateMotionGR) {
-      UpdateMotionGR=0;
-      ComputeMotionGR();
-    }
-    /* Code for MotionGR integration - End Section */
-    
-    /* Code for BlueVoice integration - Start Section */
-    /* BlueVoice Data */
-    if(SendBlueVoice){
-      osx_BlueVoice_SendData(&num_byte_sent);
-      SendBlueVoice = 0;
-    }     
-    /* Code for BlueVoice integration - End Section */
-    
-#ifdef OSX_BMS_ACOUSTIC_SOURCE_LOCALIZATION
-    /* Audio Source Localization Data */
-    if (SendAudioSourceLocalization)
-    {
-      SendAudioSourceLocalization = 0;
-      SendAudioSourceLocalizationData();
-    }
-#endif /* OSX_BMS_ACOUSTIC_SOURCE_LOCALIZATION */ 
-
     /* Wait for Event */
     __WFI();
   }
 }
 
 /**
-  * @brief  This function sets the ACC FS to 2g
+  * @brief  This function sets the ACC FS to 4g
   * @param  None
   * @retval None
   */
 void Set2GAccelerometerFullScale(void)
 {
-  /* Set Full Scale to +/-2g */
-  BSP_ACCELERO_Set_FS_Value(TargetBoardFeatures.HandleAccSensor,2.0f);
+  /* Set Full Scale to +/-4g */
+  BSP_ACCELERO_Set_FS_Value(TargetBoardFeatures.HandleAccSensor,4.0f);
   
   /* Read the Acc Sensitivity */
   BSP_ACCELERO_Get_Sensitivity(TargetBoardFeatures.HandleAccSensor,&sensitivity);
@@ -797,52 +546,7 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
     /* Set the Capture Compare Register value */
     __HAL_TIM_SET_COMPARE(&TimCCHandle, TIM_CHANNEL_1, (uhCapture + DEFAULT_uhCCR1_Val));
     
-    Quaternion=1;
-    /* Code for MotionFX integration - End Section */
-
-    /* Code for MotionGR integration - Start Section */
-    if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_GR)) {
-      UpdateMotionGR=1;
-    }
-    /* Code for MotionGR integration - End Section */
-  }
-  /* Code for MotionFX and MotionGR integration - End Section */
-
-  /* Code for MotionCP integration - Start Section */
-  /* TIM1_CH2 toggling with frequency = 50Hz */
-  if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2)
-  {
-    uhCapture = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
-    /* Set the Capture Compare Register value */
-    __HAL_TIM_SET_COMPARE(&TimCCHandle, TIM_CHANNEL_2, (uhCapture + DEFAULT_uhCCR2_Val));
-
-    if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_CP)) {
-      UpdateMotionCP=1;
-    }
-  }
-  /* Code for MotionCP integration - End Section */
-
-  /* Code for MotionAR integration - Start Section */
-  /* TIM1_CH3 toggling with frequency = 16Hz */
-  if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_3)
-  {
-    uhCapture = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_3);
-    /* Set the Capture Compare Register value */
-    __HAL_TIM_SET_COMPARE(&TimCCHandle, TIM_CHANNEL_3, (uhCapture + DEFAULT_uhCCR3_Val));
-    
-    if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_AR)) {
-      UpdateMotionAR=1;
-    }
-  }
-  /* Code for MotionAR integration - End Section */
-
-  /* TIM1_CH4 toggling with frequency = 20 Hz */
-  if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4)
-  {
-     uhCapture = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_4);
-    /* Set the Capture Compare Register value */
-    __HAL_TIM_SET_COMPARE(&TimCCHandle, TIM_CHANNEL_4, (uhCapture + uhCCR4_Val));
-    SendAccGyroMag=1;
+    ComputeQuaternions();
   }
 }
 
@@ -874,177 +578,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
       SendAudioSourceLocalization= 1;
 #endif /* OSX_BMS_ACOUSTIC_SOURCE_LOCALIZATION */
   }
-}
-
-/**
-  * @brief  Callback for user button
-  * @param  None
-  * @retval None
-  */
-static void ButtonCallback(void)
-{
-  /* Only if connected */
-  if(connected) {
-    static uint32_t HowManyButtonPress=0;
-    static uint32_t tickstart=0;
-    uint32_t tickstop;
-
-    if(!tickstart)
-      tickstart = HAL_GetTick();
-
-    tickstop = HAL_GetTick();
-
-    if((tickstop-tickstart)>2000) {
-      HowManyButtonPress=0;
-      tickstart=tickstop;
-    }
-
-    if(MDM_LicTable[OSX_MOTION_FX].Address) {
-      MDM_PayLoadLic_t *PayLoad = (MDM_PayLoadLic_t *) MDM_LicTable[OSX_MOTION_FX].Address;
-      if(PayLoad->osxLicenseInitialized) {
-        if((HowManyButtonPress+1)==BLUEMSYS_N_BUTTON_PRESS){
-          ForceReCalibration=1;
-          HowManyButtonPress=0;
-        } else {
-          HowManyButtonPress++;
-          if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_STD_TERM)) {
-             BytesToWrite = sprintf((char *)BufferToWrite, "%ld in %ldmS Reset Calib\r\n",3-HowManyButtonPress,2000-(tickstop-tickstart));
-             Term_Update(BufferToWrite,BytesToWrite);
-          } else {
-            OSX_BMS_PRINTF("%ld in %ldmS Reset Calib\r\n",3-HowManyButtonPress,2000-(tickstop-tickstart));
-          }
-        }
-      }
-    } else {
-      OSX_BMS_PRINTF("UserButton Pressed\r\n");
-    }
-  }
-}
-
-/**
-  * @brief  Reset the magneto calibration 
-  * @param  None
-  * @retval None
-  */
-static void ReCalibration(void)
-{
-  /* Only if connected */
-  if(connected) {
-    /* Reset the Compass Calibration */
-    isCal=0;
-
-    /* Notifications of Compass Calibration */
-    Config_Notify(FEATURE_MASK_SENSORFUSION_SHORT,W2ST_COMMAND_CAL_STATUS,isCal ? 100: 0);
-
-    /* Reset the Calibration */
-    osx_MotionFX_compass_forceReCalibration();
-    if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_STD_TERM)) {
-       BytesToWrite = sprintf((char *)BufferToWrite, "Force ReCalibration\n\r");
-       Term_Update(BufferToWrite,BytesToWrite);
-    } else
-      OSX_BMS_PRINTF("Force ReCalibration\n\r");
-    {
-      MDM_PayLoadLic_t *PayLoad = (MDM_PayLoadLic_t *) MDM_LicTable[OSX_MOTION_FX].Address;
-      ResetCalibrationInMemory(PayLoad->ExtraData);
-    }
-
-    /* Reset Calibation offset */
-    magOffset.magOffX = magOffset.magOffY= magOffset.magOffZ=0;
-
-    /* Switch off the LED */    
-    LedOffTargetPlatform();
-  }
-}
-
-/**
-  * @brief  Send Notification where there is a interrupt from MEMS
-  * @param  None
-  * @retval None
-  */
-static void MEMSCallback(void)
-{
-  uint8_t stat = 0;
-
-  if(W2ST_CHECK_HW_FEATURE(W2ST_HWF_FREE_FALL)) {
-    /* Check if the interrupt is due to Free Fall */
-    BSP_ACCELERO_Get_Free_Fall_Detection_Status_Ext(TargetBoardFeatures.HandleAccSensor,&stat);
-    if(stat) {
-      AccEvent_Notify(ACC_FREE_FALL);
-    }
-  }
-
-  if(W2ST_CHECK_HW_FEATURE(W2ST_HWF_DOUBLE_TAP)) {
-    /* Check if the interrupt is due to Double Tap */
-    BSP_ACCELERO_Get_Double_Tap_Detection_Status_Ext(TargetBoardFeatures.HandleAccSensor,&stat);
-    if(stat) {
-      AccEvent_Notify(ACC_DOUBLE_TAP);
-    }
-  }
-
-  if(W2ST_CHECK_HW_FEATURE(W2ST_HWF_SINGLE_TAP)) {
-    /* Check if the interrupt is due to Single Tap */
-    BSP_ACCELERO_Get_Single_Tap_Detection_Status_Ext(TargetBoardFeatures.HandleAccSensor,&stat);
-    if(stat) {
-      AccEvent_Notify(ACC_SINGLE_TAP);
-    }
-  }
-
-  if(W2ST_CHECK_HW_FEATURE(W2ST_HWF_WAKE_UP)) {
-    /* Check if the interrupt is due to Wake Up */
-    BSP_ACCELERO_Get_Wake_Up_Detection_Status_Ext(TargetBoardFeatures.HandleAccSensor,&stat);
-    if(stat) {
-      AccEvent_Notify(ACC_WAKE_UP);
-    }
-  }
-
-  if(W2ST_CHECK_HW_FEATURE(W2ST_HWF_TILT)) {
-    /* Check if the interrupt is due to Tilt */
-    BSP_ACCELERO_Get_Tilt_Detection_Status_Ext(TargetBoardFeatures.HandleAccSensor,&stat);
-    if(stat) {
-      AccEvent_Notify(ACC_TILT);
-    }
-  }
-
-  if(W2ST_CHECK_HW_FEATURE(W2ST_HWF_6DORIENTATION)) {
-    /* Check if the interrupt is due to 6D Orientation */
-    BSP_ACCELERO_Get_6D_Orientation_Status_Ext(TargetBoardFeatures.HandleAccSensor,&stat);
-    if(stat) {
-      AccEventType Orientation = GetHWOrientation6D();
-      AccEvent_Notify(Orientation);
-    }
-  }
-
-  if(W2ST_CHECK_HW_FEATURE(W2ST_HWF_PEDOMETER)) {
-    /* Check if the interrupt is due to Pedometer */
-    BSP_ACCELERO_Get_Pedometer_Status_Ext(TargetBoardFeatures.HandleAccSensor,&stat);
-    if(stat) {
-      uint16_t StepCount = GetStepHWPedometer();
-      AccEvent_Notify(StepCount);
-    }
-  }
-}
-
-/**
-  * @brief  Send Motion Data Acc/Mag/Gyro to BLE
-  * @param  None
-  * @retval None
-  */
-static void SendMotionData(void)
-{
-  SensorAxes_t ACC_Value;
-  SensorAxes_t GYR_Value;
-  SensorAxes_t MAG_Value;
-
-  /* Read the Acc values */
-  BSP_ACCELERO_Get_Axes(TargetBoardFeatures.HandleAccSensor,&ACC_Value);
-
-  /* Read the Magneto values */
-  BSP_MAGNETO_Get_Axes(TargetBoardFeatures.HandleMagSensor,&MAG_Value);
-
-  /* Read the Gyro values */
-  BSP_GYRO_Get_Axes(TargetBoardFeatures.HandleGyroSensor,&GYR_Value);
-
-  AccGyroMag_Update(&ACC_Value,&GYR_Value,&MAG_Value);
 }
 
 /* Code for MotionFX integration - Star Section */
@@ -1097,13 +630,6 @@ static void ComputeQuaternions(void)
       /* Control the calibration status */
       isCal = osx_MotionFX_compass_isCalibrated();
       if(isCal == 0x01){
-        if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_STD_TERM)) {
-          BytesToWrite = sprintf((char *)BufferToWrite, "Compass Calibrated\n\r");
-          Term_Update(BufferToWrite,BytesToWrite);
-        } else {
-          OSX_BMS_PRINTF("Compass Calibrated\n\r");
-        }
-
         /* Get new magnetometer offset */
         osx_MotionFX_getCalibrationData(&magOffset);
 
@@ -1115,9 +641,6 @@ static void ComputeQuaternions(void)
 
         /* Switch on the Led */
         LedOnTargetPlatform();
-
-        /* Notifications of Compass Calibration */
-        Config_Notify(FEATURE_MASK_SENSORFUSION_SHORT,W2ST_COMMAND_CAL_STATUS,isCal ? 100: 0);
       }
     }
   }else {
@@ -1126,15 +649,7 @@ static void ComputeQuaternions(void)
 
   /* Read the quaternions */
   osxMFX_output *MotionFX_Engine_Out = MotionFX_manager_getDataOUT();
-
-  if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_EC)) {
-    /* E-Compass Updated every 0.1 Seconds*/
-    if(CounterEC==10) {
-      uint16_t Angle = (uint16_t)trunc(100*MotionFX_Engine_Out->heading_9X);
-      CounterEC=0;
-      ECompass_Update(Angle);
-    }
-  } else {
+ {
     int32_t QuaternionNumber = (CounterFX>SEND_N_QUATERNIONS) ? (SEND_N_QUATERNIONS-1) : (CounterFX-1);
 
     /* Scaling quaternions data by a factor of 10000
@@ -1151,370 +666,8 @@ static void ComputeQuaternions(void)
       quat_axes[QuaternionNumber].AXIS_Z = (int32_t)(MotionFX_Engine_Out->quaternion_9X[2] * 10000);
     }
     OSX_BMS_PRINTF("9x:%d\t%d\t%d\r\n",quat_axes[QuaternionNumber].AXIS_X,quat_axes[QuaternionNumber].AXIS_Y,quat_axes[QuaternionNumber].AXIS_Z);
-
-    /* Every QUAT_UPDATE_MUL_10MS*10 mSeconds Send Quaternions informations via bluetooth */
-    if(CounterFX==QUAT_UPDATE_MUL_10MS){
-      Quat_Update(quat_axes);
-      CounterFX=0;
-    }
+    UpdateAdvStr("");
   }
-}
-/* Code for MotionFX integration - End Section */
-
-/* Code for MotionAR integration - Start Section */
-/**
-  * @brief  osxMotionAR Working function
-  * @param  None
-  * @retval None
-  */
-static void ComputeMotionAR(void)
-{
-  static osx_MAR_output_t ActivityCodeStored = OSX_MAR_NOACTIVITY;
-  SensorAxesRaw_t ACC_Value_Raw;
-
-  /* Read the Acc RAW values */
-  BSP_ACCELERO_Get_AxesRaw(TargetBoardFeatures.HandleAccSensor,&ACC_Value_Raw);
-
-  MotionAR_manager_run(ACC_Value_Raw);
-
-  if(ActivityCodeStored!=ActivityCode){
-    ActivityCodeStored = ActivityCode;
-
-    ActivityRec_Update(ActivityCode);
-
-    if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_STD_TERM)) {
-       BytesToWrite = sprintf((char *)BufferToWrite,"Sending: AR=%d\r\n",ActivityCode);
-       Term_Update(BufferToWrite,BytesToWrite);
-    } else {
-      OSX_BMS_PRINTF("Sending: AR=%d\r\n",ActivityCode);
-    }
-  }
-}
-/* Code for MotionAR integration - End Section */
-
-/* Code for MotionCP integration - Start Section */
-/**
-  * @brief  osxMotionCP Working function
-  * @param  None
-  * @retval None
-  */
-static void ComputeMotionCP(void)
-{  
-  static osx_MCP_output_t CarryPositionCodeStored = OSX_MCP_UNKNOWN;
-  SensorAxesRaw_t ACC_Value_Raw;
-
-  /* Read the Acc RAW values */
-  BSP_ACCELERO_Get_AxesRaw(TargetBoardFeatures.HandleAccSensor,&ACC_Value_Raw);
-  MotionCP_manager_run(ACC_Value_Raw);
-
-  if(CarryPositionCodeStored!=CarryPositionCode){
-    CarryPositionCodeStored = CarryPositionCode;
-    CarryPosRec_Update(CarryPositionCode);
-
-    if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_STD_TERM)) {
-       BytesToWrite = sprintf((char *)BufferToWrite,"Sending: CP=%d\r\n",CarryPositionCode);
-       Term_Update(BufferToWrite,BytesToWrite);
-    } else {
-      OSX_BMS_PRINTF("Sending: CP=%d\r\n",CarryPositionCode);
-    }
-  }
-}
-/* Code for MotionCP integration - End Section */
-
-/* Code for MotionGR integration - Start Section */
-/**
-  * @brief  osxMotionGR Working function
-  * @param  None
-  * @retval None
-  */
-static void ComputeMotionGR(void)
-{
-  static osx_MGR_output_t GestureRecognitionCodeStored = OSX_MGR_NOGESTURE;
-  SensorAxesRaw_t ACC_Value_Raw;
-
-  /* Read the Acc RAW values */
-  BSP_ACCELERO_Get_AxesRaw(TargetBoardFeatures.HandleAccSensor,&ACC_Value_Raw);
-  MotionGR_manager_run(ACC_Value_Raw);
-
-  if(GestureRecognitionCodeStored!=GestureRecognitionCode){
-    GestureRecognitionCodeStored = GestureRecognitionCode;
-    GestureRec_Update(GestureRecognitionCode);
-
-    if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_STD_TERM)) {
-       BytesToWrite = sprintf((char *)BufferToWrite,"Sending: GR=%d\r\n",GestureRecognitionCode);
-       Term_Update(BufferToWrite,BytesToWrite);
-    } else {
-      OSX_BMS_PRINTF("Sending: GR=%d\r\n",GestureRecognitionCode);
-    }
-  }
-}
-/* Code for MotionGR integration - End Section */
-
-/**
-* @brief  User function that is called when 1 ms of PDM data is available.
-* @param  none
-* @retval None
-*/
-void AudioProcess(void)
-{
-  int32_t i;
-  int32_t NumberMic;
-  
-  if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_AUDIO_LEVEL)) {
-    for(i = 0; i < 16; i++){
-      for(NumberMic=0;NumberMic<AUDIO_CHANNELS;NumberMic++) {
-        RMS_Ch[NumberMic] += (float)((int16_t)PCM_Buffer[i*AUDIO_CHANNELS+NumberMic] * ((int16_t)PCM_Buffer[i*AUDIO_CHANNELS+NumberMic]));
-      }
-    }
-  }
-}
-
-/**
-  * @brief  Send Audio Level Data (Ch1) to BLE
-  * @param  None
-  * @retval None
-  */
-static void SendAudioLevelData(void)
-{
-  int32_t NumberMic;
-  uint16_t DBNOISE_Value_Ch[AUDIO_CHANNELS];
-  
-  for(NumberMic=0;NumberMic<AUDIO_CHANNELS;NumberMic++) {
-    DBNOISE_Value_Ch[NumberMic] = 0;
-
-    RMS_Ch[NumberMic] /= (16.0f*MICS_DB_UPDATE_MUL_10MS*10);
-
-    DBNOISE_Value_Ch[NumberMic] = (uint16_t)((120.0f - 20 * log10f(32768 * (1 + 0.25f * (AUDIO_VOLUME_VALUE /*AudioInVolume*/ - 4))) + 10.0f * log10f(RMS_Ch[NumberMic])) * 0.3f + DBNOISE_Value_Old_Ch[NumberMic] * 0.7f);
-    DBNOISE_Value_Old_Ch[NumberMic] = DBNOISE_Value_Ch[NumberMic];
-    RMS_Ch[NumberMic] = 0.0f;
-  }
-  
-  AudioLevel_Update(DBNOISE_Value_Ch);
-}
-
-#ifdef OSX_BMS_ACOUSTIC_SOURCE_LOCALIZATION
-
-/**
-  * @brief  Send Audio Source Localization Data to BLE
-  * @param  None
-  * @retval None
-  */
-void SendAudioSourceLocalizationData(void)
-{
-  AudioSourceLocalization_Update(SourceLocationToSend);
-}
-
-#endif /* OSX_BMS_ACOUSTIC_SOURCE_LOCALIZATION */
-
-/**
-* @brief  Half Transfer user callback, called by BSP functions.
-* @param  None
-* @retval None
-*/
-void BSP_AUDIO_IN_HalfTransfer_CallBack(void)
-{
-  /*for L4 PDM to PCM conversion is performed in hardware by DFSDM peripheral*/
-  
-#ifdef USE_STM32F4XX_NUCLEO
-    BSP_AUDIO_IN_PDMToPCM(PDM_Buffer, PCM_Buffer);
-#endif /* USE_STM32F4XX_NUCLEO */
-  
-  if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_AUDIO_LEVEL))
-  {
-      AudioProcess();
-  }
-  
-#ifdef OSX_BMS_ACOUSTIC_SOURCE_LOCALIZATION
-  if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_SL))
-    AudioProcess_SL();
-#endif /* OSX_BMS_ACOUSTIC_SOURCE_LOCALIZATION */
-  
-  /* Code for BlueVoice integration - Start Section */
-  if(((W2ST_CHECK_CONNECTION(W2ST_CONNECT_BV_AUDIO))!=0) & ((W2ST_CHECK_CONNECTION(W2ST_CONNECT_BV_SYNC))!=0))
-  {
-    AudioProcess_BV();
-  }
-  /* Code for BlueVoice integration - End Section */
-}
-
-/**
-* @brief  Transfer Complete user callback, called by BSP functions.
-* @param  None
-* @retval None
-*/
-void BSP_AUDIO_IN_TransferComplete_CallBack(void)
-{
-  /*for L4 PDM to PCM conversion is performed in hardware by DFSDM peripheral*/
-  
-#ifdef USE_STM32F4XX_NUCLEO
-    BSP_AUDIO_IN_PDMToPCM(PDM_Buffer, PCM_Buffer);
-#endif /* USE_STM32F4XX_NUCLEO */
-  
-  if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_AUDIO_LEVEL))
-  {
-      AudioProcess();
-  }
-  
-#ifdef OSX_BMS_ACOUSTIC_SOURCE_LOCALIZATION
-  if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_SL))
-    AudioProcess_SL();
-#endif /* OSX_BMS_ACOUSTIC_SOURCE_LOCALIZATION */
-  
-  /* Code for BlueVoice integration - Start Section */
-  if(((W2ST_CHECK_CONNECTION(W2ST_CONNECT_BV_AUDIO))!=0) & ((W2ST_CHECK_CONNECTION(W2ST_CONNECT_BV_SYNC))!=0))
-  {
-    AudioProcess_BV();
-  }
-  /* Code for BlueVoice integration - End Section */
-}
-
-/**
-  * @brief  Send Environmetal Data (Temperature/Pressure/Humidity) to BLE
-  * @param  None
-  * @retval None
-  */
-static void SendEnvironmentalData(void)
-{
-  uint8_t Status;
-
-#ifdef OSX_BMS_DEBUG_NOTIFY_TRAMISSION
-  if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_STD_TERM)) {
-     BytesToWrite = sprintf((char *)BufferToWrite,"Sending: ");
-     Term_Update(BufferToWrite,BytesToWrite);
-  } else {
-    OSX_BMS_PRINTF("Sending: ");
-  }
-#endif /* OSX_BMS_DEBUG_NOTIFY_TRAMISSION */
-
-  /* Notifications of Compass Calibration status*/
-  if(FirstConnectionConfig) {
-    Config_Notify(FEATURE_MASK_SENSORFUSION_SHORT,W2ST_COMMAND_CAL_STATUS,isCal ? 100: 0);
-#ifdef OSX_BMS_DEBUG_NOTIFY_TRAMISSION
-     if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_STD_TERM)) {
-       BytesToWrite = sprintf((char *)BufferToWrite,"Cal=%d ",isCal);
-       Term_Update(BufferToWrite,BytesToWrite);
-     } else {
-      OSX_BMS_PRINTF("Cal=%d ",isCal);
-     }
-#endif /* OSX_BMS_DEBUG_NOTIFY_TRAMISSION */
-    FirstConnectionConfig=0;
-    
-    /* Switch on/off the LED according to calibration */
-    if(isCal){
-      LedOnTargetPlatform();
-    } else {
-      LedOffTargetPlatform();
-    }
-  }
-#ifdef STM32_SENSORTILE
-  /* Battery Informations */
-  if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_GG_EVENT)) {
-    GG_Update();
-#ifdef OSX_BMS_DEBUG_NOTIFY_TRAMISSION
-     if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_STD_TERM)) {
-       BytesToWrite = sprintf((char *)BufferToWrite,"Battery Report ");
-       Term_Update(BufferToWrite,BytesToWrite);
-     } else {
-      OSX_BMS_PRINTF("Battery Report ");
-     }
-#endif /* OSX_BMS_DEBUG_NOTIFY_TRAMISSION */
-  }
-#endif /* STM32_SENSORTILE */
-
-  /* Pressure,Humidity, and Temperatures*/
-  if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_ENV)) {
-    float SensorValue;
-    int32_t PressToSend=0;
-    uint16_t HumToSend=0;
-    int16_t Temp2ToSend=0,Temp1ToSend=0;
-    int32_t decPart, intPart;
-
-    if(TargetBoardFeatures.HandlePressSensor) {
-      if(BSP_PRESSURE_IsInitialized(TargetBoardFeatures.HandlePressSensor,&Status)==COMPONENT_OK) {
-        BSP_PRESSURE_Get_Press(TargetBoardFeatures.HandlePressSensor,(float *)&SensorValue);
-        MCR_BLUEMS_F2I_2D(SensorValue, intPart, decPart);
-        PressToSend=intPart*100+decPart;
-#ifdef OSX_BMS_DEBUG_NOTIFY_TRAMISSION
-        if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_STD_TERM)) {
-          BytesToWrite = sprintf((char *)BufferToWrite,"Press=%ld ",PressToSend);
-          Term_Update(BufferToWrite,BytesToWrite);
-        } else {
-          OSX_BMS_PRINTF("Press=%ld ",PressToSend);
-        }
-#endif /* OSX_BMS_DEBUG_NOTIFY_TRAMISSION */
-      }
-    }
-
-    if(TargetBoardFeatures.HandleHumSensor) {
-      if(BSP_HUMIDITY_IsInitialized(TargetBoardFeatures.HandleHumSensor,&Status)==COMPONENT_OK){
-        BSP_HUMIDITY_Get_Hum(TargetBoardFeatures.HandleHumSensor,(float *)&SensorValue);
-        MCR_BLUEMS_F2I_1D(SensorValue, intPart, decPart);
-        HumToSend = intPart*10+decPart;
-#ifdef OSX_BMS_DEBUG_NOTIFY_TRAMISSION
-        if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_STD_TERM)) {
-          BytesToWrite = sprintf((char *)BufferToWrite,"Hum=%d ",HumToSend);
-          Term_Update(BufferToWrite,BytesToWrite);
-        } else {
-          OSX_BMS_PRINTF("Hum=%d ",HumToSend);
-        }
-#endif /* OSX_BMS_DEBUG_NOTIFY_TRAMISSION */
-      }
-    }
-
-    if(TargetBoardFeatures.NumTempSensors==2) {
-      if(BSP_TEMPERATURE_IsInitialized(TargetBoardFeatures.HandleTempSensors[0],&Status)==COMPONENT_OK){
-        BSP_TEMPERATURE_Get_Temp(TargetBoardFeatures.HandleTempSensors[0],(float *)&SensorValue);
-        MCR_BLUEMS_F2I_1D(SensorValue, intPart, decPart);
-        Temp1ToSend = intPart*10+decPart; 
-#ifdef OSX_BMS_DEBUG_NOTIFY_TRAMISSION
-        if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_STD_TERM)) {
-          BytesToWrite = sprintf((char *)BufferToWrite,"Temp=%d ",Temp1ToSend);
-          Term_Update(BufferToWrite,BytesToWrite);
-        } else {
-          OSX_BMS_PRINTF("Temp=%d ",Temp1ToSend);
-        }
-#endif /* OSX_BMS_DEBUG_NOTIFY_TRAMISSION */
-      }
-
-      if(BSP_TEMPERATURE_IsInitialized(TargetBoardFeatures.HandleTempSensors[1],&Status)==COMPONENT_OK){
-        BSP_TEMPERATURE_Get_Temp(TargetBoardFeatures.HandleTempSensors[1],(float *)&SensorValue);
-        MCR_BLUEMS_F2I_1D(SensorValue, intPart, decPart);
-        Temp2ToSend = intPart*10+decPart;
-#ifdef OSX_BMS_DEBUG_NOTIFY_TRAMISSION
-        if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_STD_TERM)) {
-          BytesToWrite = sprintf((char *)BufferToWrite,"Temp2=%d ",Temp2ToSend);
-          Term_Update(BufferToWrite,BytesToWrite);
-        } else {
-          OSX_BMS_PRINTF("Temp2=%d ",Temp2ToSend);
-        }
-#endif /* OSX_BMS_DEBUG_NOTIFY_TRAMISSION */
-      }
-    } else if(TargetBoardFeatures.NumTempSensors==1) {
-      if(BSP_TEMPERATURE_IsInitialized(TargetBoardFeatures.HandleTempSensors[0],&Status)==COMPONENT_OK){
-        BSP_TEMPERATURE_Get_Temp(TargetBoardFeatures.HandleTempSensors[0],(float *)&SensorValue);
-        MCR_BLUEMS_F2I_1D(SensorValue, intPart, decPart);
-        Temp1ToSend = intPart*10+decPart;
-#ifdef OSX_BMS_DEBUG_NOTIFY_TRAMISSION
-        if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_STD_TERM)) {
-          BytesToWrite = sprintf((char *)BufferToWrite,"Temp1=%d ",Temp1ToSend);
-          Term_Update(BufferToWrite,BytesToWrite);
-        } else {
-          OSX_BMS_PRINTF("Temp1=%d ",Temp1ToSend);
-        }
-#endif /* OSX_BMS_DEBUG_NOTIFY_TRAMISSION */
-      }
-    }
-    Environmental_Update(PressToSend,HumToSend,Temp2ToSend,Temp1ToSend);
-  }
-
-#ifdef OSX_BMS_DEBUG_NOTIFY_TRAMISSION
-  if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_STD_TERM)) {
-     BytesToWrite = sprintf((char *)BufferToWrite,"\r\n");
-     Term_Update(BufferToWrite,BytesToWrite);
-  } else {
-    OSX_BMS_PRINTF("\r\n");
-  }
-#endif /* OSX_BMS_DEBUG_NOTIFY_TRAMISSION */
 }
 
 /**
@@ -1619,204 +772,6 @@ static void InitTimers(void)
     Error_Handler();
   }
 }
-
-/** @brief Initialize the BlueNRG Stack
- * @param None
- * @retval None
- */
-static void Init_BlueNRG_Stack(void)
-{
-  const char BoardName[8] = {NAME_BLUEMS,0};
-  uint16_t service_handle, dev_name_char_handle, appearance_char_handle;
-  int ret;
-  uint8_t  hwVersion;
-  uint16_t fwVersion;
-
-#ifdef MAC_BLUEMS
-  {
-    uint8_t tmp_bdaddr[6]= {MAC_BLUEMS};
-    int32_t i;
-    for(i=0;i<6;i++)
-      bdaddr[i] = tmp_bdaddr[i];
-  }
-#endif /* MAC_BLUEMS */
-  
-#ifndef STM32_NUCLEO
-  /* Initialize the BlueNRG SPI driver */
-  BNRG_SPI_Init();
-#endif /* STM32_NUCLEO */
-
-  /* Initialize the BlueNRG HCI */
-  HCI_Init();
-    
-  /* Reset BlueNRG hardware */
-  BlueNRG_RST();
-
-  /* get the BlueNRG HW and FW versions */
-  getBlueNRGVersion(&hwVersion, &fwVersion);
-
-  if (hwVersion > 0x30) {
-    /* X-NUCLEO-IDB05A1 expansion board is used */
-    TargetBoardFeatures.bnrg_expansion_board = IDB05A1;
-  } else {
-    /* X-NUCLEO-IDB0041 expansion board is used */
-    TargetBoardFeatures.bnrg_expansion_board = IDB04A1;
-  }
-  
-  /* 
-   * Reset BlueNRG again otherwise it will fail.
-   */
-  BlueNRG_RST();
-
-#ifndef MAC_BLUEMS
-  #ifdef MAC_STM32UID_BLUEMS
-  /* Create a Unique BLE MAC Related to STM32 UID */
-  {
-    bdaddr[0] = (STM32_UUID[1]>>24)&0xFF;
-    bdaddr[1] = (STM32_UUID[0]    )&0xFF;
-    bdaddr[2] = (STM32_UUID[2] >>8)&0xFF;
-    bdaddr[3] = (STM32_UUID[0]>>16)&0xFF;
-#ifdef STM32_NUCLEO
-    /* if IDB05A1 = Number between 100->199
-     * if IDB04A1 = Number between 0->99
-     * where Y == (OSX_BMS_VERSION_MAJOR + OSX_BMS_VERSION_MINOR)&0xF */
-    bdaddr[4] = (hwVersion > 0x30) ?
-         ((((OSX_BMS_VERSION_MAJOR-48)*10) + (OSX_BMS_VERSION_MINOR-48)+100)&0xFF) :
-         ((((OSX_BMS_VERSION_MAJOR-48)*10) + (OSX_BMS_VERSION_MINOR-48)    )&0xFF) ;
-#else /* STM32_NUCLEO */
-    bdaddr[4] = (((OSX_BMS_VERSION_MAJOR-48)*10) + (OSX_BMS_VERSION_MINOR-48)+100)&0xFF;
-#endif  /* STM32_NUCLEO */
-    bdaddr[5] = 0xC0; /* for a Legal BLE Random MAC */
-  }
-  #else /* MAC_STM32UID_BLUEMS */
-  {
-    /* we will let the BLE chip to use its Random MAC address */
-    uint8_t data_len_out;
-    ret = aci_hal_read_config_data(CONFIG_DATA_RANDOM_ADDRESS, 6, &data_len_out, bdaddr);
-
-    if(ret){
-      OSX_BMS_PRINTF("\r\nReading  Random BD_ADDR failed\r\n");
-      goto fail;
-    }
-  }
-  #endif /* MAC_STM32UID_BLUEMS */
-#else /* MAC_BLUEMS */
-  ret = aci_hal_write_config_data(CONFIG_DATA_PUBADDR_OFFSET,
-                                  CONFIG_DATA_PUBADDR_LEN,
-                                  bdaddr);
-
-  if(ret){
-     OSX_BMS_PRINTF("\r\nSetting Pubblic BD_ADDR failed\r\n");
-     goto fail;
-  }
-#endif /* MAC_BLUEMS */
-
-  ret = aci_gatt_init();    
-  if(ret){
-     OSX_BMS_PRINTF("\r\nGATT_Init failed\r\n");
-     goto fail;
-  }
-
-  if (TargetBoardFeatures.bnrg_expansion_board == IDB05A1) {
-    ret = aci_gap_init_IDB05A1(GAP_PERIPHERAL_ROLE_IDB05A1, 0, 0x07, &service_handle, &dev_name_char_handle, &appearance_char_handle);
-  }else {
-    ret = aci_gap_init_IDB04A1(GAP_PERIPHERAL_ROLE_IDB04A1, &service_handle, &dev_name_char_handle, &appearance_char_handle);
-  }
-
-  if(ret != BLE_STATUS_SUCCESS){
-     OSX_BMS_PRINTF("\r\nGAP_Init failed\r\n");
-     goto fail;
-  }
-
-#ifndef  MAC_BLUEMS
-  #ifdef MAC_STM32UID_BLUEMS
-    ret = hci_le_set_random_address(bdaddr);
-
-    if(ret){
-       OSX_BMS_PRINTF("\r\nSetting the Static Random BD_ADDR failed\r\n");
-       goto fail;
-    }
-  #endif /* MAC_STM32UID_BLUEMS */
-#endif /* MAC_BLUEMS */
-
-  ret = aci_gatt_update_char_value(service_handle, dev_name_char_handle, 0,
-                                   7/*strlen(BoardName)*/, (uint8_t *)BoardName);
-
-  if(ret){
-     OSX_BMS_PRINTF("\r\naci_gatt_update_char_value failed\r\n");
-    while(1);
-  }
-
-  ret = aci_gap_set_auth_requirement(MITM_PROTECTION_REQUIRED,
-                                     OOB_AUTH_DATA_ABSENT,
-                                     NULL, 7, 16,
-                                     USE_FIXED_PIN_FOR_PAIRING, 123456,
-                                     BONDING);
-  if (ret != BLE_STATUS_SUCCESS) {
-     OSX_BMS_PRINTF("\r\nGAP setting Authentication failed\r\n");
-     goto fail;
-  }
-
-  OSX_BMS_PRINTF("SERVER: BLE Stack Initialized \r\n"
-         "\t\tBoard type=%s HWver=%d, FWver=%d.%d.%c\r\n"
-         "\t\tBoardName= %s\r\n"
-         "\t\tBoardMAC = %x:%x:%x:%x:%x:%x\r\n\n",
-         (TargetBoardFeatures.bnrg_expansion_board==IDB05A1) ? "IDB05A1" : "IDB04A1",
-         hwVersion,
-         fwVersion>>8,
-         (fwVersion>>4)&0xF,
-         (hwVersion > 0x30) ? ('a'+(fwVersion&0xF)-1) : 'a',
-         BoardName,
-         bdaddr[5],bdaddr[4],bdaddr[3],bdaddr[2],bdaddr[1],bdaddr[0]);
-
-  /* Set output power level */
-  aci_hal_set_tx_power_level(1,4);
-
-  return;
-
-fail:
-  return;
-}
-
-/** @brief Initialize all the Custom BlueNRG services
- * @param None
- * @retval None
- */
-static void Init_BlueNRG_Custom_Services(void)
-{
-  int ret;
-  
-  ret = Add_HW_SW_ServW2ST_Service();
-  if(ret == BLE_STATUS_SUCCESS)
-  {
-     OSX_BMS_PRINTF("HW & SW Service W2ST added successfully\r\n");
-  }
-  else
-  {
-     OSX_BMS_PRINTF("\r\nError while adding HW & SW Service W2ST\r\n");
-  }
-
-  ret = Add_ConsoleW2ST_Service();
-  if(ret == BLE_STATUS_SUCCESS)
-  {
-     OSX_BMS_PRINTF("Console Service W2ST added successfully\r\n");
-  }
-  else
-  {
-     OSX_BMS_PRINTF("\r\nError while adding Console Service W2ST\r\n");
-  }
-
-  ret = Add_ConfigW2ST_Service();
-  if(ret == BLE_STATUS_SUCCESS)
-  {
-     OSX_BMS_PRINTF("Config  Service W2ST added successfully\r\n");
-  }
-  else
-  {
-     OSX_BMS_PRINTF("\r\nError while adding Config Service W2ST\r\n");
-  }
-}
-
 #ifdef USE_STM32F4XX_NUCLEO
 #ifdef STM32_NUCLEO
 /**
@@ -2105,14 +1060,7 @@ static unsigned char SaveCalibrationToMemory(uint32_t *MagnetoCalibration)
     MagnetoCalibration[6] = *((uint32_t *) temp);
     temp = ((void *) &(magOffset.expMagVect));
     MagnetoCalibration[7] = *((uint32_t *) temp);
-
-    if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_STD_TERM)) {
-     BytesToWrite = sprintf((char *)BufferToWrite, "Magneto Calibration will be saved in FLASH\r\n");
-     Term_Update(BufferToWrite,BytesToWrite);
-    } else {
-      OSX_BMS_PRINTF("Magneto Calibration will be saved in FLASH\r\n");
-    }
-	NecessityToSaveMetaDataManager=1;
+    NecessityToSaveMetaDataManager=1;
   }
 
   return Success;
@@ -2131,13 +1079,6 @@ static unsigned char ResetCalibrationInMemory(uint32_t *MagnetoCalibration)
 
   for(Counter=0;Counter<8;Counter++)
     MagnetoCalibration[Counter]=0xFFFFFFFF;
-
-  if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_STD_TERM)) {
-     BytesToWrite = sprintf((char *)BufferToWrite, "Magneto Calibration will be eresed in FLASH\r\n");
-     Term_Update(BufferToWrite,BytesToWrite);
-  } else {
-    OSX_BMS_PRINTF("Magneto Calibration will be eresed in FLASH\r\n");
-  }
   NecessityToSaveMetaDataManager=1;
   
   return Success;
@@ -2193,5 +1134,203 @@ void StartTimer(void)
       /* Set the Capture Compare Register value */
       __HAL_TIM_SET_COMPARE(&TimCCHandle, TIM_CHANNEL_1, (uhCapture + DEFAULT_uhCCR1_Val));
     }
+}
+/**
+ * @brief  Initialize the BlueNRG
+ *
+ * @param  None
+ * @retval None
+ */
+void BlueNRG_Init(void)
+{
+  tBleStatus ret = BLE_STATUS_SUCCESS;
+
+  uint16_t service_handle, dev_name_char_handle, appearance_char_handle;
+  uint8_t SERVER_BDADDR[] = { MAC_ADDRESS };
+
+  uint8_t  hwVersion;
+  uint16_t fwVersion;
+  uint8_t bnrg_expansion_board = IDB04A1; /* at startup, suppose the X-NUCLEO-IDB04A1 is used */
+
+  /* get the BlueNRG HW and FW versions */
+  getBlueNRGVersion(&hwVersion, &fwVersion);
+
+  if (hwVersion > 0x30) { /* X-NUCLEO-IDB05A1 expansion board is used */
+    bnrg_expansion_board = IDB05A1; 
+  }
+  
+  ret = aci_hal_write_config_data(CONFIG_DATA_PUBADDR_OFFSET,
+                                  CONFIG_DATA_PUBADDR_LEN,
+                                  SERVER_BDADDR);
+
+  if (ret != BLE_STATUS_SUCCESS)
+  {
+    __asm("nop");
+  }
+
+  ret = aci_gatt_init();
+
+  if (ret != BLE_STATUS_SUCCESS)
+  {
+    __asm("nop");
+  }
+
+  if (bnrg_expansion_board == IDB05A1) {
+    ret = aci_gap_init_IDB05A1(GAP_PERIPHERAL_ROLE_IDB05A1, 0, 0x07, &service_handle, &dev_name_char_handle, &appearance_char_handle);
+  }
+  else {
+    ret = aci_gap_init_IDB04A1(GAP_PERIPHERAL_ROLE_IDB04A1, &service_handle, &dev_name_char_handle, &appearance_char_handle);
+  }
+  
+  if (ret != BLE_STATUS_SUCCESS)
+  {
+    __asm("nop");
+  }
+
+  ret = aci_hal_set_tx_power_level(1,4);
+
+  if (ret != BLE_STATUS_SUCCESS)
+  {
+    __asm("nop");
+  }
+
+}
+
+tBleStatus Beacon_Init(void)
+{
+  tBleStatus ret = BLE_STATUS_SUCCESS;
+
+  /* Disable scan response. */
+  hci_le_set_scan_resp_data(0, NULL);
+
+  uint16_t AdvertisingInterval = (10 * ADVERTISING_INTERVAL_INCREMENT / 10);
+
+  /* Put the device in a non-connectable mode. */
+  ret = aci_gap_set_discoverable(ADV_NONCONN_IND,                          /*< Advertise as non-connectable, undirected. */
+                                 AdvertisingInterval, AdvertisingInterval, /*< Set the advertising interval as 700 ms (0.625 us increment). */
+                                 PUBLIC_ADDR, NO_WHITE_LIST_USE,           /*< Use the public address, with no white list. */
+                                 0, NULL,                                  /*< Do not use a local name. */
+                                 0, NULL,                                  /*< Do not include the service UUID list. */
+                                 0, 0);                                    /*< Do not set a slave connection interval. */
+
+  if (ret != BLE_STATUS_SUCCESS)
+  {
+    return ret;
+  }
+
+  /* Remove the TX power level advertisement (this is done to decrease the packet size). */
+  ret = aci_gap_delete_ad_type(AD_TYPE_TX_POWER_LEVEL);
+
+  if (ret != BLE_STATUS_SUCCESS)
+  {
+    return ret;
+  }
+
+  uint8_t service_data[] =
+  {
+    23,                                                                      /*< Length. */
+    AD_TYPE_SERVICE_DATA,                                                    /*< Service Data data type value. */
+    0x00,                                                                   /*< Reserved. */
+    0x00,                                                                   /*< Reserved. */
+    0x00,                                                                   /*< Reserved. */
+    0x00,                                                                   /*< Reserved. */
+    0x00,                                                                   /*< Reserved. */
+    0x00,                                                                   /*< Reserved. */
+    0x00,                                                                   /*< Reserved. */
+    0x00,                                                                   /*< Reserved. */
+    0x00,                                                                   /*< Reserved. */
+    0x00,                                                                   /*< Reserved. */
+    0x00,                                                                   /*< Reserved. */
+    0x00,                                                                   /*< Reserved. */
+    0x00,                                                                   /*< Reserved. */
+    0x00,                                                                   /*< Reserved. */
+    0x00,                                                                   /*< Reserved. */
+    0x00,                                                                   /*< Reserved. */
+    0x00,                                                                   /*< Reserved. */
+    0x00,                                                                   /*< Reserved. */
+    0x00,                                                                   /*< Reserved. */
+    0x00,                                                                   /*< Reserved. */
+    0x00,                                                                   /*< Reserved. */
+    0x00                                                                    /*< Reserved. */
+  };
+
+  uint8_t service_uuid_list[] =
+  {
+    3,                                                                      /*< Length. */
+    AD_TYPE_16_BIT_SERV_UUID_CMPLT_LIST,                                    /*< Complete list of 16-bit Service UUIDs data type value. */
+    0xAA, 0xFE                                                              /*< 16-bit Eddystone UUID. */
+  };
+
+  uint8_t flags[] =
+  {
+    2,                                                                      /*< Length. */
+    AD_TYPE_FLAGS,                                                          /*< Flags data type value. */
+    (FLAG_BIT_LE_GENERAL_DISCOVERABLE_MODE | FLAG_BIT_BR_EDR_NOT_SUPPORTED) /*< BLE general discoverable, without BR/EDR support. */
+  };
+
+  /* Update the service data. */
+  ret = aci_gap_update_adv_data(sizeof(service_data), service_data);
+
+  if (ret != BLE_STATUS_SUCCESS)
+  {
+    return ret;
+  }
+
+  /* Update the service UUID list. */
+  ret = aci_gap_update_adv_data(sizeof(service_uuid_list), service_uuid_list);
+
+  if (ret != BLE_STATUS_SUCCESS)
+  {
+    return ret;
+  }
+
+  /* Update the adverstising flags. */
+  ret = aci_gap_update_adv_data(sizeof(flags), flags);
+
+  if (ret != BLE_STATUS_SUCCESS)
+  {
+    return ret;
+  }
+
+  return ret;
+}
+tBleStatus UpdateAdvStr(uint8_t * buf)
+{  
+  tBleStatus ret = BLE_STATUS_SUCCESS;
+  uint8_t service_data[] =
+  {
+    23,                                                                      /*< Length. */
+    AD_TYPE_SERVICE_DATA,                                                    /*< Service Data data type value. */
+    0xAA, 0xFE,                                                              /*< 16-bit Eddystone UUID. */
+    0x00,                                                                    /*< UID frame type. */
+    'h',
+    'h',
+    'h',
+    'h',
+    'h',
+    'h',
+    'h',
+    'h',
+    'd',
+    's',
+    's',
+    'e',
+    't',
+    'h',
+    0x00,
+    'q',
+    0x00,
+    0x00,                                                                   /*< Reserved. */
+    0x00                                                                    /*< Reserved. */
+  };
+  memcpy(&service_data[2],buf,20);
+  /* Update the service data. */
+  ret = aci_gap_update_adv_data(sizeof(service_data), service_data);
+
+  if (ret != BLE_STATUS_SUCCESS)
+  {
+    return ret;
+  }
+  return ret;
 }
 /******************* (C) COPYRIGHT 2016 STMicroelectronics *****END OF FILE****/

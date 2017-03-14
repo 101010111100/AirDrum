@@ -186,6 +186,7 @@
           <state>USE_STM32L4XX_NUCLEO</state>
           <state>STM32_SENSORTILE</state>
           <state>OSX_BMS_ENABLE_PRINTF</state>
+          <state>OSX_BMS_LICENSE_H_FILE</state>
         </option>
         <option>
           <name>CCPreprocFile</name>
@@ -317,6 +318,7 @@
           <state>$PROJ_DIR$\..\..\Inc</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\Drivers\STM32L4xx_HAL_Driver\Inc</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\Middlewares\ST\STM32_BlueNRG\SimpleBlueNRG_HCI\includes</state>
+          <state>$PROJ_DIR$\..\..\..\..\..\..\Middlewares\ST\STM32_BlueNRG\Interface</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\Drivers\BSP\Components\Common</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\Drivers\BSP\Components\lsm6dsm</state>
           <state>$PROJ_DIR$\..\..\..\..\..\..\Drivers\BSP\Components\lps25hb</state>
@@ -997,25 +999,13 @@
     <group>
       <name>User</name>
       <file>
-        <name>$PROJ_DIR$\..\..\Src\AudioBV_Manager.c</name>
-      </file>
-      <file>
         <name>$PROJ_DIR$\..\..\Src\HWAdvanceFeatures.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\Src\main.c</name>
       </file>
       <file>
-        <name>$PROJ_DIR$\..\..\Src\MotionAR_Manager.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\Src\MotionCP_Manager.c</name>
-      </file>
-      <file>
         <name>$PROJ_DIR$\..\..\Src\MotionFX_Manager.c</name>
-      </file>
-      <file>
-        <name>$PROJ_DIR$\..\..\Src\MotionGR_Manager.c</name>
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\Src\OTA.c</name>

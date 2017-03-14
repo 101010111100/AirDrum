@@ -1,10 +1,10 @@
 /**
   ******************************************************************************
-  * @file    sensor_service.c
-  * @author  MCD Application Team
+  * @file    cube_hal.h 
+  * @author  CL
   * @version V1.0.0
-  * @date    04-July-2014
-  * @brief   Add a sample service using a vendor specific profile.
+  * @date    03-November-2014
+  * @brief   
   ******************************************************************************
   * @attention
   *
@@ -34,81 +34,34 @@
   *
   ******************************************************************************
   */
-#include "sensor_service.h"
+  
+/* Define to prevent recursive inclusion -------------------------------------*/
+#ifndef _CUBE_HAL_H_
+#define _CUBE_HAL_H_
 
-/** @addtogroup X-CUBE-BLE1_Applications
- *  @{
- */
+/* Includes ------------------------------------------------------------------*/
+#ifdef USE_STM32F4XX_NUCLEO
+  #include "stm32f4xx_hal.h"
+  #include "stm32f4xx_nucleo.h"
+  #include "stm32f4xx_nucleo_bluenrg.h"
+  #include "stm32f4xx_hal_conf.h"
+#endif
 
-/** @addtogroup Beacon
- *  @{
- */
- 
-/** @defgroup SENSOR_SERVICE
- * @{
- */
+#ifdef USE_STM32L0XX_NUCLEO
+  #include "stm32l0xx_hal.h"
+  #include "stm32l0xx_nucleo.h"
+  #include "stm32l0xx_nucleo_bluenrg.h"
+  #include "stm32l0xx_hal_conf.h"
+#endif
 
-/**
- * @brief  Callback processing the ACI events.
- * @note   Inside this function each event must be identified and correctly
- *         parsed.
- * @param  void* Pointer to the ACI packet
- * @retval None
- */
-void HCI_Event_CB(void *pckt)
-{
-  hci_uart_pckt *hci_pckt = pckt;
+#ifdef USE_STM32L4XX_NUCLEO
+  #include "stm32l4xx_hal.h"
+  #include "stm32l4xx_hal_conf.h"
+#endif
 
-  /* obtain event packet */
-  hci_event_pckt *event_pckt = (hci_event_pckt*)hci_pckt->data;
+void SystemClock_Config(void);
 
-  if(hci_pckt->type != HCI_EVENT_PKT)
-  {
-    return;
-  }
+#endif //_CUBE_HAL_H_
 
-  switch(event_pckt->evt)
-  {
-
-  case EVT_DISCONN_COMPLETE:
-    {
-      ;
-    }
-    break;
-
-  case EVT_LE_META_EVENT:
-    {
-      evt_le_meta_event *evt = (void *)event_pckt->data;
-
-      switch(evt->subevent)
-      {
-      case EVT_LE_CONN_COMPLETE:
-        {
-          ;
-        }
-        break;
-      }
-    }
-    break;
-
-  case EVT_VENDOR:
-    {
-      ;
-    }
-    break;
-  }
-}
-
-/**
- * @}
- */
-
-/**
- * @}
- */
-
-/**
- * @}
- */
- 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+

@@ -87,18 +87,6 @@ extern tBleStatus AudioLevel_Update(uint16_t *Mic);
 extern tBleStatus GG_Update(void);
 #endif /* STM32_SENSORTILE */
 
-/* Code for MotionAR integration - Start Section */
-extern tBleStatus ActivityRec_Update(osx_MAR_output_t ActivityCode);
-/* Code for MotionAR integration - End Section */
-
-/* Code for MotionCP integration - Start Section */
-extern tBleStatus CarryPosRec_Update(osx_MCP_output_t CarryPositionCode);
-/* Code for MotionCP integration - End Section */
-
-/* Code for MotionGR integration - Start Section */
-extern tBleStatus GestureRec_Update(osx_MGR_output_t GestureCode);
-/* Code for MotionGR integration - End Section */
-
 #ifdef OSX_BMS_ACOUSTIC_SOURCE_LOCALIZATION
 extern tBleStatus AudioSourceLocalization_Update(uint16_t Angle);
 #endif /* OSX_BMS_ACOUSTIC_SOURCE_LOCALIZATION */
