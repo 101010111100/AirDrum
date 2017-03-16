@@ -112,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     float oldCount = 65536;
-    boolean first = false;
+    boolean first = true;
     float firstR2 = 0;
     float firstR0 = 0;
     private BluetoothAdapter.LeScanCallback leScanCallback = new BluetoothAdapter.LeScanCallback() {
@@ -133,8 +133,8 @@ public class MainActivity extends AppCompatActivity {
                     firstR2 = r2;
                     firstR0 = r0;
                 } else {
-                    float angleR0 = getAngle(firstR0, r0);
-                    float angleR2 = getAngle(firstR2, r2);
+                    float angleR0 = getAngle(r0,firstR0);
+                    float angleR2 = getAngle(r2,firstR2);
                     //右鼓
                     if (angleR0 > 15) {
                         //上
@@ -159,27 +159,27 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 }
-                oldCount = count;
-                if (Looper.myLooper() == Looper.getMainLooper()) {
-                    if (DEBUG) {
-                        final String str = String.format("%.2f          %.2f          %.2f", count, r2, r0);
-                        textView1.setText(str);
-                    } else {
-                        mGLSurfaceView.setXYZ(0, r2, r0);
-                    }
+            }
+            oldCount = count;
+            if (Looper.myLooper() == Looper.getMainLooper()) {
+                if (DEBUG) {
+                    final String str = String.format("%.2f          %.2f          %.2f", count, r2, r0);
+                    textView1.setText(str);
                 } else {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (DEBUG) {
-                                final String str = String.format("%.2f          %.2f          %.2f", count, r2, r0);
-                                textView1.setText(str);
-                            } else {
-                                mGLSurfaceView.setXYZ(0, r2, r0);
-                            }
-                        }
-                    });
+                    mGLSurfaceView.setXYZ(0, r2, r0);
                 }
+            } else {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (DEBUG) {
+                            final String str = String.format("%.2f          %.2f          %.2f", count, r2, r0);
+                            textView1.setText(str);
+                        } else {
+                            mGLSurfaceView.setXYZ(0, r2, r0);
+                        }
+                    }
+                });
             }
         }
     };
