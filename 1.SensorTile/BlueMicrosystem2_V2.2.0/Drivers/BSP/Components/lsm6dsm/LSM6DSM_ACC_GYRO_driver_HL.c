@@ -314,7 +314,7 @@ static DrvStatusTypeDef LSM6DSM_X_Init( DrvContextTypeDef *handle )
   }
   
   /* Select default output data rate. */
-  pComponentData->Previous_ODR = 104.0f;
+  pComponentData->Previous_ODR = 1040.0f;
   
   /* Output data rate selection - power down. */
   if ( LSM6DSM_ACC_GYRO_W_ODR_XL( (void *)handle, LSM6DSM_ACC_GYRO_ODR_XL_POWER_DOWN ) == MEMS_ERROR )

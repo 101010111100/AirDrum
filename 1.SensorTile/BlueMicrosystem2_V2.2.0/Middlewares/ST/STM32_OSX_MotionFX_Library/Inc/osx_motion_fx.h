@@ -43,8 +43,8 @@
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
-#include "stdint.h"
+  /* Includes ------------------------------------------------------------------*/
+  #include "stdint.h"
 
 /** @addtogroup MIDDLEWARES
   * @{

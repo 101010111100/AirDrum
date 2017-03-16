@@ -139,7 +139,7 @@ void InitTargetPlatform(TargetType_t BoardType)
   USBD_Start(&USBD_Device);
   /* 10 seconds ... for having time to open the Terminal
    * for looking the BlueMicrosystem Initialization phase */
-  HAL_Delay(10000);
+  HAL_Delay(1000);
   #endif /* OSX_BMS_ENABLE_PRINTF */
 #endif /* STM32_NUCLEO */
   

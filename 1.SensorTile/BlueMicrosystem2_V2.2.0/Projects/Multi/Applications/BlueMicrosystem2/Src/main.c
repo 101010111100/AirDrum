@@ -21,7 +21,7 @@
 #include "sensor_service.h"
 #include "bluenrg_utils.h"
 #include "HWAdvanceFeatures.h"
-
+#include "PeakCounter.h"
 /* Private typedef -----------------------------------------------------------*/
 
 /* Private define ------------------------------------------------------------*/
@@ -44,7 +44,7 @@
                                    ((buf)[2] =  (uint8_t) (val>>8)  ) , \
                                    ((buf)[1] =  (uint8_t) (val>>16) ) , \
                                    ((buf)[0] =  (uint8_t) (val>>24) ) )
-
+#define INT32_T(x)                 (int32_t)(x)
 /* Imported Variables -------------------------------------------------------------*/
 extern uint8_t set_connectable;
 
@@ -195,8 +195,8 @@ int main(void)
     InitHWFeatures();
   }
 
-  /* Set Accelerometer Full Scale to 2G */
-  Set4GAccelerometerFullScale();
+  /* Set Accelerometer Full Scale to 8G */
+  Set8GAccelerometerFullScale();
 
   /* Read the Acc Sensitivity */
   BSP_ACCELERO_Get_Sensitivity(TargetBoardFeatures.HandleAccSensor,&sensitivity);
@@ -223,6 +223,7 @@ int main(void)
       MotionFX_manager_start_9X();
     }
   }
+  ResetCalibrationInMemory(PayLoad->ExtraData);
   /* Infinite loop */
   while (1){
     
@@ -257,6 +258,21 @@ void Set4GAccelerometerFullScale(void)
   BSP_ACCELERO_Get_Sensitivity(TargetBoardFeatures.HandleAccSensor,&sensitivity);
   sensitivity_Mul = sensitivity* ((float) FROM_MG_TO_G);
 }
+/**
+  * @brief  This function dsets the ACC FS to 4g
+  * @param  None
+  * @retval None
+  */
+void Set8GAccelerometerFullScale(void)
+{
+  
+  /* Set Full Scale to +/-8g */
+  BSP_ACCELERO_Set_FS_Value(TargetBoardFeatures.HandleAccSensor,8.0f);
+
+  /* Read the Acc Sensitivity */
+  BSP_ACCELERO_Get_Sensitivity(TargetBoardFeatures.HandleAccSensor,&sensitivity);
+  sensitivity_Mul = sensitivity* ((float) FROM_MG_TO_G);
+}
 
 /**
   * @brief  Output Compare callback in non blocking mode 
@@ -266,7 +282,6 @@ void Set4GAccelerometerFullScale(void)
 void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
 {
   uint32_t uhCapture=0;
-  
   /* Code for MotionFX and MotionGR integration - Start Section */
   /* TIM1_CH1 toggling with frequency = 100Hz */
   if(htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)
@@ -298,6 +313,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   }
 }
 
+uint32_t drumCount = 0;
+uint8_t peek = 0;
 /* Code for MotionFX integration - Star Section */
 /* @brief  osxMotionFX Working function
  * @param  None
@@ -305,11 +322,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
  */
 static void ComputeQuaternions(void)
 {
-  static SensorAxes_t quat_axes[SEND_N_QUATERNIONS];
   static int32_t calibIndex =0;
   static int32_t CounterFX  =0;
   static int32_t CounterEC  =0;
-  SensorAxes_t ACC_Value;
   SensorAxesRaw_t ACC_Value_Raw;
   SensorAxes_t GYR_Value;
   SensorAxes_t MAG_Value;
@@ -331,65 +346,119 @@ static void ComputeQuaternions(void)
   BSP_GYRO_Get_Axes(TargetBoardFeatures.HandleGyroSensor,&GYR_Value);
 
   MotionFX_manager_run(ACC_Value_Raw,GYR_Value,MAG_Value);
-      
-  /* Check if is calibrated */
-  if(isCal!=0x01){
-    /* Run Compass Calibration @ 25Hz */
-    calibIndex++;
-    if (calibIndex == 4){
-      calibIndex = 0;
-      ACC_Value.AXIS_X = (int32_t)(ACC_Value_Raw.AXIS_X * sensitivity);
-      ACC_Value.AXIS_Y = (int32_t)(ACC_Value_Raw.AXIS_Y * sensitivity);
-      ACC_Value.AXIS_Z = (int32_t)(ACC_Value_Raw.AXIS_Z * sensitivity);
-      osx_MotionFX_compass_saveAcc(ACC_Value.AXIS_X,ACC_Value.AXIS_Y,ACC_Value.AXIS_Z);	/* Accelerometer data ENU systems coordinate	*/
-      osx_MotionFX_compass_saveMag(MAG_Value.AXIS_X,MAG_Value.AXIS_Y,MAG_Value.AXIS_Z);	/* Magnetometer  data ENU systems coordinate	*/            
-      osx_MotionFX_compass_run();
+     
+  //需关闭校准，否则传感器板子受大力后会无数据输出一段时间
 
-      /* Control the calibration status */
-      isCal = osx_MotionFX_compass_isCalibrated();
-      if(isCal == 0x01){
-        /* Get new magnetometer offset */
-        osx_MotionFX_getCalibrationData(&magOffset);
-
-        /* Save the calibration in Memory */
-        {
-          MDM_PayLoadLic_t *PayLoad = (MDM_PayLoadLic_t *) MDM_LicTable[OSX_MOTION_FX].Address;
-          SaveCalibrationToMemory(PayLoad->ExtraData);
-        }
-
-        /* Switch on the Led */
-        LedOnTargetPlatform();
-      }
-    }
-  }else {
-    calibIndex=0;
-  }
+//  /* Check if is calibrated */
+//  if(isCal!=0x01){
+//    /* Run Compass Calibration @ 25Hz */
+//    calibIndex++;
+//    if (calibIndex == 4){
+//      calibIndex = 0;
+//      ACC_Value.AXIS_X = (int32_t)(ACC_Value_Raw.AXIS_X * sensitivity);
+//      ACC_Value.AXIS_Y = (int32_t)(ACC_Value_Raw.AXIS_Y * sensitivity);
+//      ACC_Value.AXIS_Z = (int32_t)(ACC_Value_Raw.AXIS_Z * sensitivity);
+//      osx_MotionFX_compass_saveAcc(ACC_Value.AXIS_X,ACC_Value.AXIS_Y,ACC_Value.AXIS_Z);	/* Accelerometer data ENU systems coordinate	*/
+//      osx_MotionFX_compass_saveMag(MAG_Value.AXIS_X,MAG_Value.AXIS_Y,MAG_Value.AXIS_Z);	/* Magnetometer  data ENU systems coordinate	*/            
+//      osx_MotionFX_compass_run();
+//
+//      /* Control the calibration status */
+//      isCal = osx_MotionFX_compass_isCalibrated();
+//      if(isCal == 0x01){
+//        /* Get new magnetometer offset */
+//        osx_MotionFX_getCalibrationData(&magOffset);
+//
+//        /* Save the calibration in Memory */
+//        {
+//          MDM_PayLoadLic_t *PayLoad = (MDM_PayLoadLic_t *) MDM_LicTable[OSX_MOTION_FX].Address;
+//          SaveCalibrationToMemory(PayLoad->ExtraData);
+//        }
+//
+//        /* Switch on the Led */
+//        LedOnTargetPlatform();
+//      }
+//    }
+//  }else {
+//    calibIndex=0;
+//  }
 
   /* Read the quaternions */
   osxMFX_output *MotionFX_Engine_Out = MotionFX_manager_getDataOUT();
  {
-    int32_t QuaternionNumber = (CounterFX>SEND_N_QUATERNIONS) ? (SEND_N_QUATERNIONS-1) : (CounterFX-1);
 
     /* Scaling quaternions data by a factor of 10000
       (Scale factor to handle float during data transfer BT) */
-
-    /* Save the quaternions values */
-    if(MotionFX_Engine_Out->quaternion_9X[3] < 0){
-      quat_axes[QuaternionNumber].AXIS_X = (int32_t)(MotionFX_Engine_Out->quaternion_9X[0] * (-10000));
-      quat_axes[QuaternionNumber].AXIS_Y = (int32_t)(MotionFX_Engine_Out->quaternion_9X[1] * (-10000));
-      quat_axes[QuaternionNumber].AXIS_Z = (int32_t)(MotionFX_Engine_Out->quaternion_9X[2] * (-10000));
-    } else {
-      quat_axes[QuaternionNumber].AXIS_X = (int32_t)(MotionFX_Engine_Out->quaternion_9X[0] * 10000);
-      quat_axes[QuaternionNumber].AXIS_Y = (int32_t)(MotionFX_Engine_Out->quaternion_9X[1] * 10000);
-      quat_axes[QuaternionNumber].AXIS_Z = (int32_t)(MotionFX_Engine_Out->quaternion_9X[2] * 10000);
-    }
-    STORE_LE_16(buff+0,quat_axes[QuaternionNumber].AXIS_X);
-    STORE_LE_16(buff+2,quat_axes[QuaternionNumber].AXIS_Y);
-    STORE_LE_16(buff+4,quat_axes[QuaternionNumber].AXIS_Z);
-    UpdateAdv(buff,6);
+//
+//    /* Save the quaternions values */
+//    qi = MotionFX_Engine_Out->quaternion_9X[0];
+//    qj = MotionFX_Engine_Out->quaternion_9X[1];
+//    qk = MotionFX_Engine_Out->quaternion_9X[2];
+//    qs = MotionFX_Engine_Out->quaternion_9X[3];
+//    STORE_LE_16(buff+0,((int32_t)(qi * 10000)));
+//    STORE_LE_16(buff+2,((int32_t)(qj * 10000)));
+//    STORE_LE_16(buff+4,((int32_t)(qk * 10000)));
+//    STORE_LE_16(buff+6,((int32_t)(qs * 10000)));
+//    UpdateAdv(buff,8);
     
+//    /* Save the quaternions values */
+//    int32_t x = ((int32_t)(MotionFX_Engine_Out->rotation_9X[0] * 100));
+//    int32_t y = ((int32_t)(MotionFX_Engine_Out->rotation_9X[1] * 100));
+//    int32_t z = ((int32_t)(MotionFX_Engine_Out->rotation_9X[2] * 100));
+//    STORE_LE_16(buff+0,x);
+//    STORE_LE_16(buff+2,y);
+//    STORE_LE_16(buff+4,z);
+//    UpdateAdv(buff,6);
+    
+    
+//    /* Save the quaternions values */
+//    int32_t x = ((int32_t)(MotionFX_Engine_Out->rotation_9X[0] * 100));
+//    int32_t y = ((int32_t)(MotionFX_Engine_Out->rotation_9X[1] * 100));
+//    int32_t z = ((int32_t)(MotionFX_Engine_Out->quaternion_9X[3] * 10000));
+//    STORE_LE_16(buff+0,x);
+//    STORE_LE_16(buff+2,y);
+//    STORE_LE_16(buff+4,z);
+//    UpdateAdv(buff,6);
+//    
+    
+//    int32_t x = ((int32_t)(MotionFX_Engine_Out->rotation_9X[0] * 100));
+
+    int32_t x = ACC_Value_Raw.AXIS_X > ACC_Value_Raw.AXIS_Y ? ACC_Value_Raw.AXIS_X : ACC_Value_Raw.AXIS_Y;
+    x = x > ACC_Value_Raw.AXIS_Z ? x : ACC_Value_Raw.AXIS_Z;
+
+    int32_t y = ((int32_t)(MotionFX_Engine_Out->rotation_9X[2] * 100));
+    int32_t z = ((int32_t)(MotionFX_Engine_Out->rotation_9X[0] * 100));
+    STORE_LE_16(buff+0,drumCount);
+    STORE_LE_16(buff+2,y);
+    STORE_LE_16(buff+4,z);
+    UpdateAdv(buff,6);
+    /*
+    if(x > 30000)
+    {
+      peek = 1;
+    }else if(x < 10000 && peek == 1)
+    {
+      peek = 0;
+      drumCount++;
+    }
+   */
+   drumCount += PeakCounter(((int32_t)(MotionFX_Engine_Out->rotation_9X[2] * 100)),100,6,250);
 #ifdef OSX_BMS_ENABLE_PRINTF
-    OSX_BMS_PRINTF("9x:%d\t%d\t%d\r\n",quat_axes[QuaternionNumber].AXIS_X,quat_axes[QuaternionNumber].AXIS_Y,quat_axes[QuaternionNumber].AXIS_Z);
+/*
+      OSX_BMS_PRINTF("%d\t%d\t%d\t%d\t%d\t%d\t%d\r\n",
+                     INT32_T(MotionFX_Engine_Out->rotation_9X[0]),
+                     INT32_T(MotionFX_Engine_Out->rotation_9X[1]),
+                     INT32_T(MotionFX_Engine_Out->rotation_9X[2]),
+                     
+                     INT32_T(MotionFX_Engine_Out->quaternion_9X[0] * 100),
+                     INT32_T(MotionFX_Engine_Out->quaternion_9X[1] * 100),
+                     INT32_T(MotionFX_Engine_Out->quaternion_9X[2] * 100),
+                     INT32_T(MotionFX_Engine_Out->quaternion_9X[3] * 100)
+                       );
+*/    
+    OSX_BMS_PRINTF("%d\t%d\r\n",((int32_t)(MotionFX_Engine_Out->rotation_9X[2] * 100)),((int32_t)(MotionFX_Engine_Out->rotation_9X[0] * 100)));
+//    OSX_BMS_PRINTF("%d\r\n",((int32_t)(MotionFX_Engine_Out->rotation_9X[2] * 100)));
+//   OSX_BMS_PRINTF("%d\t%d\t%d\t%d\r\n",drumCount,x,y,z);
+//    OSX_BMS_PRINTF("9x:%d\t%d\t%d\r\n",quat_axes[QuaternionNumber].AXIS_X,quat_axes[QuaternionNumber].AXIS_Y,quat_axes[QuaternionNumber].AXIS_Z);
 #endif /* OSX_BMS_ENABLE_PRINTF */
   }
 }
@@ -862,7 +931,7 @@ tBleStatus Beacon_Init(void)
   /* Disable scan response. */
   hci_le_set_scan_resp_data(0, NULL);
 
-  uint16_t AdvertisingInterval = (10 * ADVERTISING_INTERVAL_INCREMENT / 10);
+  uint16_t AdvertisingInterval = (1 * ADVERTISING_INTERVAL_INCREMENT / 10);
 
   /* Put the device in a non-connectable mode. */
   ret = aci_gap_set_discoverable(ADV_NONCONN_IND,                          /*< Advertise as non-connectable, undirected. */

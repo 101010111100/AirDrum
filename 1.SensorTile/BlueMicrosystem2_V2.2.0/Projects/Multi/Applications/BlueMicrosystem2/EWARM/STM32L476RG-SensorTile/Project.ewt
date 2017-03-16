@@ -1181,6 +1181,9 @@
         <name>$PROJ_DIR$\..\..\Src\OTA.c</name>
       </file>
       <file>
+        <name>$PROJ_DIR$\..\..\Src\PeakCounter.c</name>
+      </file>
+      <file>
         <name>$PROJ_DIR$\..\..\Src\sensor_service.c</name>
       </file>
       <file>

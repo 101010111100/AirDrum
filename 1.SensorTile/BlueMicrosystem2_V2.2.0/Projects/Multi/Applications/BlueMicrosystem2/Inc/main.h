@@ -64,8 +64,8 @@
 
 /* Exported functions ------------------------------------------------------- */
 extern void Error_Handler(void);
-extern void Set2GAccelerometerFullScale(void);
 extern void Set4GAccelerometerFullScale(void);
+extern void Set8GAccelerometerFullScale(void);
 
 /* Exported defines and variables  ------------------------------------------------------- */
 
