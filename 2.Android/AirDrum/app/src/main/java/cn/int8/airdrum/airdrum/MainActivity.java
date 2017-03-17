@@ -19,7 +19,7 @@ public class MainActivity extends AppCompatActivity {
 
     // 操作音效
     private SoundPool sp;
-    private int snare, kick, closehh, openhh;
+    private int snare, kick, closehh, openhh,start;
     private MySurfaceView mGLSurfaceView;
     private TextView textView1;
     private BluetoothAdapter mBluetoothAdapter;
@@ -38,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
         kick = sp.load(this, R.raw.kick, 1);
         closehh = sp.load(this, R.raw.closehh, 1);
         openhh = sp.load(this, R.raw.openhh, 1);
+        start = sp.load(this, R.raw.start, 1);
         if (DEBUG) {
             setContentView(R.layout.activity_main);
         } else {
@@ -46,6 +47,8 @@ public class MainActivity extends AppCompatActivity {
             setContentView(mGLSurfaceView);
             mGLSurfaceView.requestFocus();//获取焦点
             mGLSurfaceView.setFocusableInTouchMode(true);//设置为可触控
+            //设置左鼓棒横屏向上
+            mGLSurfaceView.setXYZ(1,0, 0, -90);
         }
 
 
@@ -163,7 +166,7 @@ public class MainActivity extends AppCompatActivity {
             final float r0 = getUShort(scanRecord, 6) / 100.00f;//r0的范围是0~360
 
 
-            System.out.println("r2:\t"+ r2+"\tr0:\t"+ r0 + "\tangle:" + getAngle(r0,firstR0)+"\tfirstr0:"+firstR0);
+            System.out.println("r2:\t"+ r2+"\tr0:\t"+ r0 + "\tangle:" + getAngle(r0,firstR0)+"\tfirstr0:"+getAngle(r0,firstR0)+90);
             if (count > oldCount) {
                 //第一次落棒
                 if (first) {
@@ -171,6 +174,7 @@ public class MainActivity extends AppCompatActivity {
                     //第一次落棒时保存第一次落棒的位置
                     firstR2 = r2;
                     firstR0 = r0;
+                    sp.play(start, 1.0f, 0.3f, 0, 0, 1.0f);
                 } else {
                     float angleR0 = getMinAngle(r0,firstR0);
                     float angleR2 = getMinAngle(r2,firstR2);
@@ -200,12 +204,15 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             oldCount = count;
+            final float angleZ = getAngle(r0,firstR0)+90;;
+            float z = angleZ > 360 ? angleZ - 360:angleZ;
+            final float angleY = z > 180 ? r2:-r2;
             if (Looper.myLooper() == Looper.getMainLooper()) {
                 if (DEBUG) {
                     final String str = String.format("%.2f          %.2f          %.2f", count, r2, r0);
                     textView1.setText(str);
                 } else {
-                    mGLSurfaceView.setXYZ(0, r0 < 180 ? -r2:r2, getAngle(r0,firstR0));
+                    mGLSurfaceView.setXYZ(0,0,angleY , angleZ);
                 }
             } else {
                 runOnUiThread(new Runnable() {
@@ -215,7 +222,7 @@ public class MainActivity extends AppCompatActivity {
                             final String str = String.format("%.2f          %.2f          %.2f", count, r2, r0);
                             textView1.setText(str);
                         } else {
-                            mGLSurfaceView.setXYZ(0, r0 < 180 ? -r2:r2, getAngle(r0,firstR0));
+                            mGLSurfaceView.setXYZ(0,0, angleY,angleZ);
                         }
                     }
                 });

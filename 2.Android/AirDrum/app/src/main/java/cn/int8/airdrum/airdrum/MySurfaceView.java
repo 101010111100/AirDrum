@@ -22,19 +22,23 @@ class MySurfaceView extends GLSurfaceView
     private float mPreviousX;//上次的触控位置X坐标
     
     int textureId;//系统分配的纹理id
-	
+
+    MatrixState ms[] = new MatrixState[2];
 	public MySurfaceView(Context context) {
         super(context);
         this.setEGLContextClientVersion(2); //设置使用OPENGL ES2.0
         mRenderer = new SceneRenderer();	//创建场景渲染器
         setRenderer(mRenderer);				//设置渲染器		        
-        setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);//设置渲染模式为主动渲染   
+        setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);//设置渲染模式为主动渲染
+        ms[0] = new MatrixState();
+        ms[1] = new MatrixState();
+
     }
-	public boolean setXYZ(float x,float y,float z)
+	public boolean setXYZ(int index,float x,float y,float z)
 	{
-        mRenderer.xAngle = x;//设置沿X轴旋转角度
-        mRenderer.yAngle = y;//设置沿x轴旋转角度
-        mRenderer.zAngle = z;//设置沿z轴旋转角度
+        mRenderer.xAngle[index] = x;//设置沿x轴旋转角度
+        mRenderer.yAngle[index] = y;//设置沿y轴旋转角度
+        mRenderer.zAngle[index] = z;//设置沿z轴旋转角度
         requestRender();//重绘画面
         return true;
 	}
@@ -45,57 +49,85 @@ class MySurfaceView extends GLSurfaceView
         float y = e.getY();
         float x = e.getX();
         switch (e.getAction()) {
-        case MotionEvent.ACTION_MOVE:
-            float dy = y - mPreviousY;//计算触控笔Y位移
-            float dx = x - mPreviousX;//计算触控笔X位移
-            mRenderer.xAngle =x;//设置沿X轴旋转角度
-            mRenderer.yAngle=y;//设置沿x轴旋转角度
-            mRenderer.zAngle ++;//设置沿z轴旋转角度
-            requestRender();//重绘画面
+            case MotionEvent.ACTION_MOVE:
+                float dy = y - mPreviousY;//计算触控笔Y位移
+                float dx = x - mPreviousX;//计算触控笔X位移
+                mRenderer.xAngle[1] = x;//设置沿X轴旋转角度
+                mRenderer.yAngle[1] = y;//设置沿x轴旋转角度
+                mRenderer.zAngle[1]++;//设置沿z轴旋转角度
+                requestRender();//重绘画面
         }
         mPreviousY = y;//记录触控笔位置
         mPreviousX = x;//记录触控笔位置
         return true;
     }
 
-	private class SceneRenderer implements Renderer {
-        float xAngle; //绕X轴旋转的角度
-        float yAngle;//绕Y轴旋转的角度
-        float zAngle; //绕Z轴旋转的角度
-        //从指定的obj文件中加载对象
-        LoadedObjectVertexNormalTexture lovo;
-
-        public void onDrawFrame(GL10 gl) {
-            //清除深度缓冲与颜色缓冲
-            GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
+	private class SceneRenderer implements Renderer
+    {
+        float xAngle[];//绕X轴旋转的角度
+        float yAngle[];//绕Y轴旋转的角度
+    	float zAngle[]; //绕Z轴旋转的角度
+    	//从指定的obj文件中加载对象
+        LoadedObjectVertexNormalTexture lovo[];
+        public SceneRenderer() {
+            xAngle = new float[2];
+            yAngle = new float[2];
+            zAngle = new float[2];
+            lovo = new LoadedObjectVertexNormalTexture[2];
+        }
+        public void onDrawFrame(GL10 gl)
+        {
+        	//清除深度缓冲与颜色缓冲
+            GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
 
             //坐标系推远  
-            MatrixState.pushMatrix();
-            MatrixState.translate(0, 0, -20);   //ch.obj
+            ms[0].pushMatrix();
+            ms[0].translate(-5, -3, -20);   //ch.obj
             //绕Y轴、Z轴旋转
-            MatrixState.rotate(xAngle, 1, 0, 0);
-            MatrixState.rotate(yAngle, 0, 1, 0);
-            MatrixState.rotate(zAngle, 0, 0, 1);
+            ms[0].rotate(xAngle[0], 1, 0, 0);
+            ms[0].rotate(yAngle[0], 0, 1, 0);
+            ms[0].rotate(zAngle[0], 0, 0, 1);
+
+
+            //坐标系推远
+            ms[1].pushMatrix();
+            ms[1].translate(-5, +3, -20);   //ch.obj
+            //绕Y轴、Z轴旋转
+            ms[1].rotate(xAngle[1], 1, 0, 0);
+            ms[1].rotate(yAngle[1], 0, 1, 0);
+            ms[1].rotate(zAngle[1], 0, 0, 1);
 
             //若加载的物体部位空则绘制物体
-            if (lovo != null) {
-                lovo.drawSelf(textureId);
+            if(lovo[0]!=null)
+            {
+                lovo[0].drawSelf(textureId,ms[0]);
             }
-            MatrixState.popMatrix();
+            //若加载的物体部位空则绘制物体
+            if(lovo[1]!=null)
+            {
+                lovo[1].drawSelf(textureId,ms[1]);
+            }
+            ms[0].popMatrix();
+            ms[1].popMatrix();
         }
 
         public void onSurfaceChanged(GL10 gl, int width, int height) {
             //设置视窗大小及位置
-            GLES20.glViewport(0, 0, width, height);
-            //计算GLSurfaceView的宽高比
+        	GLES20.glViewport(0, 0, width, height);
+        	//计算GLSurfaceView的宽高比
             float ratio = (float) width / height;
             //调用此方法计算产生透视投影矩阵
-            MatrixState.setProjectFrustum(-ratio, ratio, -1, 1, 2, 100);
+            ms[0].setProjectFrustum(-ratio, ratio, -1, 1, 2, 100);
             //调用此方法产生摄像机9参数位置矩阵
-            MatrixState.setCamera(0, 0, 0, 0f, 0f, -1f, 0f, 1.0f, 0.0f);
+            ms[0].setCamera(0,0,0,0f,0f,-1f,0f,1.0f,0.0f);
+            //调用此方法计算产生透视投影矩阵
+            ms[1].setProjectFrustum(-ratio, ratio, -1, 1, 2, 100);
+            //调用此方法产生摄像机9参数位置矩阵
+            ms[1].setCamera(0,0,0,0f,0f,-1f,0f,1.0f,0.0f);
         }
 
-        public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+        public void onSurfaceCreated(GL10 gl, EGLConfig config)
+        {
             //设置屏幕背景色RGBA
             //GLES20.glClearColor(0.0f,0.0f,0.0f,1.0f);
 
@@ -107,13 +139,18 @@ class MySurfaceView extends GLSurfaceView
             //打开背面剪裁   
             GLES20.glEnable(GLES20.GL_CULL_FACE);
             //初始化变换矩阵
-            MatrixState.setInitStack();
+            ms[0].setInitStack();
             //初始化光源位置
-            MatrixState.setLightLocation(40, 10, 20);
+            ms[0].setLightLocation(0,0, 0);
+            //初始化变换矩阵
+            ms[1].setInitStack();
+            //初始化光源位置
+            ms[1].setLightLocation(0, 0, 0);
             //加载要绘制的物体
-            lovo = LoadUtil.loadFromFile("ch_t.obj", MySurfaceView.this.getResources(), MySurfaceView.this);
+            lovo[0]=LoadUtil.loadFromFile("ch_t.obj", MySurfaceView.this.getResources(),MySurfaceView.this);
+            lovo[1]=LoadUtil.loadFromFile("ch_t.obj", MySurfaceView.this.getResources(),MySurfaceView.this);
             //加载纹理
-            textureId = initTexture(R.drawable.mw);
+            textureId=initTexture(R.drawable.mw);
         }
     }
   	public int initTexture(int drawableId)//textureId

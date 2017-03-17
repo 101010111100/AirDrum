@@ -8,46 +8,46 @@ import java.nio.FloatBuffer;
 import java.util.Stack;
 
 //存储系统矩阵状态的类
-public class MatrixState 
+public class MatrixState
 {
-	private static float[] mProjMatrix = new float[16];//4x4矩阵 投影用
-    private static float[] mVMatrix = new float[16];//摄像机位置朝向9参数矩阵   
-    private static float[] currMatrix;//当前变换矩阵
-    public static float[] lightLocation=new float[]{0,0,0};//定位光光源位置
-    public static FloatBuffer cameraFB;    
-    public static FloatBuffer lightPositionFB;
+	private float[] mProjMatrix = new float[16];//4x4矩阵 投影用
+    private float[] mVMatrix = new float[16];//摄像机位置朝向9参数矩阵
+    private float[] currMatrix;//当前变换矩阵
+    public float[] lightLocation=new float[]{0,0,0};//定位光光源位置
+    public FloatBuffer cameraFB;
+    public FloatBuffer lightPositionFB;
     
-    public static Stack<float[]> mStack=new Stack<float[]>();//保护变换矩阵的栈
+    public Stack<float[]> mStack=new Stack<float[]>();//保护变换矩阵的栈
     
-    public static void setInitStack()//获取不变换初始矩阵
+    public void setInitStack()//获取不变换初始矩阵
     {
     	currMatrix=new float[16];
         Matrix.setRotateM(currMatrix, 0, 0, 1, 0, 0);
     }
     
-    public static void pushMatrix()//保护变换矩阵
+    public void pushMatrix()//保护变换矩阵
     {
     	mStack.push(currMatrix.clone());
     }
     
-    public static void popMatrix()//恢复变换矩阵
+    public void popMatrix()//恢复变换矩阵
     {
     	currMatrix=mStack.pop();
     }
     
-    public static void translate(float x,float y,float z)//设置沿xyz轴移动
+    public void translate(float x,float y,float z)//设置沿xyz轴移动
     {
     	Matrix.translateM(currMatrix, 0, x, y, z);
     }
     
-    public static void rotate(float angle,float x,float y,float z)//设置绕xyz轴移动
+    public void rotate(float angle,float x,float y,float z)//设置绕xyz轴移动
     {
     	Matrix.rotateM(currMatrix,0,angle,x,y,z);
     }
     
     
     //设置摄像机
-    public static void setCamera
+    public void setCamera
     (
     		float cx,	//摄像机位置x
     		float cy,   //摄像机位置y
@@ -88,7 +88,7 @@ public class MatrixState
     }
     
     //设置透视投影参数
-    public static void setProjectFrustum
+    public void setProjectFrustum
     (
     	float left,		//near面的left
     	float right,    //near面的right
@@ -102,7 +102,7 @@ public class MatrixState
     }
     
     //设置正交投影参数
-    public static void setProjectOrtho
+    public void setProjectOrtho
     (
     	float left,		//near面的left
     	float right,    //near面的right
@@ -116,7 +116,7 @@ public class MatrixState
     }   
    
     //获取具体物体的总变换矩阵
-    public static float[] getFinalMatrix()
+    public float[] getFinalMatrix()
     {
     	float[] mMVPMatrix=new float[16];
     	Matrix.multiplyMM(mMVPMatrix, 0, mVMatrix, 0, currMatrix, 0);
@@ -125,13 +125,13 @@ public class MatrixState
     }
     
     //获取具体物体的变换矩阵
-    public static float[] getMMatrix()
+    public float[] getMMatrix()
     {       
         return currMatrix;
     }
     
     //设置灯光位置的方法
-    public static void setLightLocation(float x,float y,float z)
+    public void setLightLocation(float x,float y,float z)
     {
     	lightLocation[0]=x;
     	lightLocation[1]=y;

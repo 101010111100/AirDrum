@@ -95,18 +95,18 @@ public class LoadedObjectVertexNormalTexture
         maCameraHandle=GLES20.glGetUniformLocation(mProgram, "uCamera"); 
     }
     
-    public void drawSelf(int texId)
+    public void drawSelf(int texId,MatrixState ms)
     {        
     	 //制定使用某套着色器程序
     	 GLES20.glUseProgram(mProgram);
          //将最终变换矩阵传入着色器程序
-         GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, MatrixState.getFinalMatrix(), 0); 
+         GLES20.glUniformMatrix4fv(muMVPMatrixHandle, 1, false, ms.getFinalMatrix(), 0);
          //将位置、旋转变换矩阵传入着色器程序
-         GLES20.glUniformMatrix4fv(muMMatrixHandle, 1, false, MatrixState.getMMatrix(), 0);   
+         GLES20.glUniformMatrix4fv(muMMatrixHandle, 1, false, ms.getMMatrix(), 0);
          //将光源位置传入着色器程序   
-         GLES20.glUniform3fv(maLightLocationHandle, 1, MatrixState.lightPositionFB);
+         GLES20.glUniform3fv(maLightLocationHandle, 1, ms.lightPositionFB);
          //将摄像机位置传入着色器程序   
-         GLES20.glUniform3fv(maCameraHandle, 1, MatrixState.cameraFB);
+         GLES20.glUniform3fv(maCameraHandle, 1, ms.cameraFB);
          // 将顶点位置数据传入渲染管线
          GLES20.glVertexAttribPointer  
          (
