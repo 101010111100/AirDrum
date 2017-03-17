@@ -12,6 +12,8 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.TextView;
 public class MainActivity extends AppCompatActivity {
 
@@ -24,8 +26,8 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothLeScanner mBluetoothLeScanner;
     private boolean mScanning;
     private final static String TAG = MainActivity.class.getSimpleName();
-    private final static boolean DEBUG = true;
-    ;
+    private final static boolean DEBUG = false;
+
 
     //    private final static boolean DEBUG = false;
     @Override
@@ -84,7 +86,29 @@ public class MainActivity extends AppCompatActivity {
         scanLeDevice(false);
         Log.i(TAG, "stopLeScan");
     }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            // Handle action bar item clicks here. The action bar will
+            // automatically handle clicks on the Home/Up button, so long
+            // as you specify a parent activity in AndroidManifest.xml.
+            switch (item.getItemId()) {
+                case R.id.restart:
+                    oldCount = 65536;
+                    first = true;
+                    firstR2 = 0;
+                    firstR0 = 0;
+                    break;
 
+                default:
+                    break;
+            }
+            return super.onOptionsItemSelected(item);
+        }
     private void scanLeDevice(final boolean enable) {
         if (enable) {
             mScanning = true;
@@ -99,12 +123,25 @@ public class MainActivity extends AppCompatActivity {
         return (short) (((b[index + 1] << 8) | b[index + 0] & 0xff));
     }
 
+    private int getUShort(byte[] b, int index) {
+        return ((int) (((b[index + 1] << 8) | b[index + 0] & 0xff))&0xffff);
+    }
     //获得angleA和angleB的最小夹角（考虑到360 = 0）的问题
-    private float getAngle(float angleA, float angleB) {
+    private float getMinAngle(float angleA, float angleB) {
         float angle = angleA - angleB;
         if (angle > 180) {
             return 360 - angle;
         } else if (angle < -180) {
+            return 360 + angle;
+        } else {
+            return angle;
+        }
+    }
+    //获得以初始落点为原点，计算当前落点的位置
+    //举例：如果左前右方向的初始落点firstAngle=30度，currentAngle=30的时候，得到值为0，currentAngle=40的时候，得到值为10，currentAngle=20时，得到值为350
+    private float getAngle(float currentAngle,float firstAngle) {
+        float angle = currentAngle - firstAngle;
+        if (angle < 0) {
             return 360 + angle;
         } else {
             return angle;
@@ -123,8 +160,10 @@ public class MainActivity extends AppCompatActivity {
 //            final float z =360 - (getShort(scanRecord,6) + 10000) /20000.00f * 360;
             final float count = getShort(scanRecord, 2);
             final float r2 = 180 + getShort(scanRecord, 4) / 100.00f;//r2的范围是-180~+180 加180后得到0~360数据
-            final float r0 = getShort(scanRecord, 6) / 100.00f;//r0的范围是0~360
-            final boolean play;
+            final float r0 = getUShort(scanRecord, 6) / 100.00f;//r0的范围是0~360
+
+
+            System.out.println("r2:\t"+ r2+"\tr0:\t"+ r0 + "\tangle:" + getAngle(r0,firstR0)+"\tfirstr0:"+firstR0);
             if (count > oldCount) {
                 //第一次落棒
                 if (first) {
@@ -133,8 +172,8 @@ public class MainActivity extends AppCompatActivity {
                     firstR2 = r2;
                     firstR0 = r0;
                 } else {
-                    float angleR0 = getAngle(r0,firstR0);
-                    float angleR2 = getAngle(r2,firstR2);
+                    float angleR0 = getMinAngle(r0,firstR0);
+                    float angleR2 = getMinAngle(r2,firstR2);
                     //右鼓
                     if (angleR0 > 15) {
                         //上
@@ -166,7 +205,7 @@ public class MainActivity extends AppCompatActivity {
                     final String str = String.format("%.2f          %.2f          %.2f", count, r2, r0);
                     textView1.setText(str);
                 } else {
-                    mGLSurfaceView.setXYZ(0, r2, r0);
+                    mGLSurfaceView.setXYZ(0, r0 < 180 ? -r2:r2, getAngle(r0,firstR0));
                 }
             } else {
                 runOnUiThread(new Runnable() {
@@ -176,7 +215,7 @@ public class MainActivity extends AppCompatActivity {
                             final String str = String.format("%.2f          %.2f          %.2f", count, r2, r0);
                             textView1.setText(str);
                         } else {
-                            mGLSurfaceView.setXYZ(0, r2, r0);
+                            mGLSurfaceView.setXYZ(0, r0 < 180 ? -r2:r2, getAngle(r0,firstR0));
                         }
                     }
                 });

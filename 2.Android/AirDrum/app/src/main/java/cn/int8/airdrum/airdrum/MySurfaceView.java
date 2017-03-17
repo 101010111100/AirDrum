@@ -58,18 +58,16 @@ class MySurfaceView extends GLSurfaceView
         return true;
     }
 
-	private class SceneRenderer implements Renderer
-    {  
-    	float xAngle; //绕X轴旋转的角度
-		float yAngle;//绕Y轴旋转的角度
-    	float zAngle; //绕Z轴旋转的角度
-    	//从指定的obj文件中加载对象
-		LoadedObjectVertexNormalTexture lovo;
-    	
-        public void onDrawFrame(GL10 gl) 
-        { 
-        	//清除深度缓冲与颜色缓冲
-            GLES20.glClear( GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
+	private class SceneRenderer implements Renderer {
+        float xAngle; //绕X轴旋转的角度
+        float yAngle;//绕Y轴旋转的角度
+        float zAngle; //绕Z轴旋转的角度
+        //从指定的obj文件中加载对象
+        LoadedObjectVertexNormalTexture lovo;
+
+        public void onDrawFrame(GL10 gl) {
+            //清除深度缓冲与颜色缓冲
+            GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT | GLES20.GL_COLOR_BUFFER_BIT);
 
             //坐标系推远  
             MatrixState.pushMatrix();
@@ -80,28 +78,30 @@ class MySurfaceView extends GLSurfaceView
             MatrixState.rotate(zAngle, 0, 0, 1);
 
             //若加载的物体部位空则绘制物体
-            if(lovo!=null)
-            {
-            	lovo.drawSelf(textureId);
-            }   
-            MatrixState.popMatrix();                  
-        }  
+            if (lovo != null) {
+                lovo.drawSelf(textureId);
+            }
+            MatrixState.popMatrix();
+        }
 
         public void onSurfaceChanged(GL10 gl, int width, int height) {
             //设置视窗大小及位置
-        	GLES20.glViewport(0, 0, width, height);
-        	//计算GLSurfaceView的宽高比
+            GLES20.glViewport(0, 0, width, height);
+            //计算GLSurfaceView的宽高比
             float ratio = (float) width / height;
             //调用此方法计算产生透视投影矩阵
             MatrixState.setProjectFrustum(-ratio, ratio, -1, 1, 2, 100);
             //调用此方法产生摄像机9参数位置矩阵
-            MatrixState.setCamera(0,0,0,0f,0f,-1f,0f,1.0f,0.0f);
+            MatrixState.setCamera(0, 0, 0, 0f, 0f, -1f, 0f, 1.0f, 0.0f);
         }
 
-        public void onSurfaceCreated(GL10 gl, EGLConfig config) 
-        {
+        public void onSurfaceCreated(GL10 gl, EGLConfig config) {
             //设置屏幕背景色RGBA
-            GLES20.glClearColor(0.0f,0.0f,0.0f,1.0f);    
+            //GLES20.glClearColor(0.0f,0.0f,0.0f,1.0f);
+
+            GLES20.glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+            GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+
             //打开深度检测
             GLES20.glEnable(GLES20.GL_DEPTH_TEST);
             //打开背面剪裁   
@@ -111,9 +111,9 @@ class MySurfaceView extends GLSurfaceView
             //初始化光源位置
             MatrixState.setLightLocation(40, 10, 20);
             //加载要绘制的物体
-            lovo=LoadUtil.loadFromFile("ch_t.obj", MySurfaceView.this.getResources(),MySurfaceView.this);
+            lovo = LoadUtil.loadFromFile("ch_t.obj", MySurfaceView.this.getResources(), MySurfaceView.this);
             //加载纹理
-            textureId=initTexture(R.drawable.pf);
+            textureId = initTexture(R.drawable.mw);
         }
     }
   	public int initTexture(int drawableId)//textureId
