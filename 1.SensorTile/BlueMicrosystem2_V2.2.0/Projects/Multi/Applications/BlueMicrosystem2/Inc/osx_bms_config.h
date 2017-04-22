@@ -56,7 +56,7 @@
 #endif /* STM32_SENSORTILE */
 
 /* Define the BlueMicrosystem MAC address, otherwise it will create a Unique MAC */
-//#define MAC_BLUEMS 0xFF, 0xEE, 0xDD, 0xAA, 0xAA, 0xAA
+#define MAC_BLUEMS 0xFF, 0xEE, 0xDD, 0xAA, 0xAA, 0xAA
 
 #ifndef MAC_BLUEMS
 /* For creating one MAC related to STM32 UID, Otherwise the BLE will use it's random MAC */

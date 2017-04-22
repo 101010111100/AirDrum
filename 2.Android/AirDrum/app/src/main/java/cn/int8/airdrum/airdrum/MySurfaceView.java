@@ -27,7 +27,7 @@ class MySurfaceView extends GLSurfaceView
 	public MySurfaceView(Context context) {
         super(context);
         this.setEGLContextClientVersion(2); //设置使用OPENGL ES2.0
-        mRenderer = new SceneRenderer();	//创建场景渲染器
+        mRenderer = new SceneRenderer(context);	//创建场景渲染器
         setRenderer(mRenderer);				//设置渲染器		        
         setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);//设置渲染模式为主动渲染
         ms[0] = new MatrixState();
@@ -64,12 +64,14 @@ class MySurfaceView extends GLSurfaceView
 
 	private class SceneRenderer implements Renderer
     {
+        Context mContext;
         float xAngle[];//绕X轴旋转的角度
         float yAngle[];//绕Y轴旋转的角度
     	float zAngle[]; //绕Z轴旋转的角度
     	//从指定的obj文件中加载对象
         LoadedObjectVertexNormalTexture lovo[];
-        public SceneRenderer() {
+        public SceneRenderer(Context context) {
+            this.mContext = context;
             xAngle = new float[2];
             yAngle = new float[2];
             zAngle = new float[2];

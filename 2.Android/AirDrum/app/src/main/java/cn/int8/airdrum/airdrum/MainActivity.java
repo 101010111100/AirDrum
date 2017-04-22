@@ -15,6 +15,9 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
+
+import java.util.Arrays;
+
 public class MainActivity extends AppCompatActivity {
 
     // 操作音效
@@ -121,7 +124,16 @@ public class MainActivity extends AppCompatActivity {
             mBluetoothAdapter.stopLeScan(leScanCallback);
         }
     }
-
+    public static long getLong(byte[] b,int index) {
+        return ((((long) b[index + 0] & 0xff) << 56)
+                | (((long) b[index + 1] & 0xff) << 48)
+                | (((long) b[index + 2] & 0xff) << 40)
+                | (((long) b[index + 3] & 0xff) << 32)
+                | (((long) b[index + 4] & 0xff) << 24)
+                | (((long) b[index + 5] & 0xff) << 16)
+                | (((long) b[index + 6] & 0xff) << 8)
+                | (((long) b[index + 7] & 0xff) << 0));
+    }
     private short getShort(byte[] b, int index) {
         return (short) (((b[index + 1] << 8) | b[index + 0] & 0xff));
     }
@@ -155,17 +167,24 @@ public class MainActivity extends AppCompatActivity {
     boolean first = true;
     float firstR2 = 0;
     float firstR0 = 0;
+    long[] drumIds = new long[10];
     private BluetoothAdapter.LeScanCallback leScanCallback = new BluetoothAdapter.LeScanCallback() {
         @Override
         public void onLeScan(final BluetoothDevice device, int rssi, byte[] scanRecord) {
 //            final float x = 360 -  (getShort(scanRecord,2) + 10000) /20000.00f * 360;
 //            final float y =360 -  (getShort(scanRecord,4) ) / 100.00f;
 //            final float z =360 - (getShort(scanRecord,6) + 10000) /20000.00f * 360;
-            final float count = getShort(scanRecord, 2);
-            final float r2 = 180 + getShort(scanRecord, 4) / 100.00f;//r2的范围是-180~+180 加180后得到0~360数据
-            final float r0 = getUShort(scanRecord, 6) / 100.00f;//r0的范围是0~360
-
-
+            getLong(scanRecord,2);
+            final float count = getShort(scanRecord, 6+2);
+            final float r2 = 180 + getShort(scanRecord, 6+4) / 100.00f;//r2的范围是-180~+180 加180后得到0~360数据
+            final float r0 = getUShort(scanRecord, 6+6) / 100.00f;//r0的范围是0~360
+            //读取数据标识，因为没有使用CRC校验，防止受其它蓝牙数据影响
+            //当str为“airdrum”时认为数据有校
+            String s = new String(Arrays.copyOfRange(scanRecord, 2+6+6,2+6+6+7));
+            if(!s.equals("airdrum"))
+            {
+                return;
+            }
             System.out.println("r2:\t"+ r2+"\tr0:\t"+ r0 + "\tangle:" + getAngle(r0,firstR0)+"\tfirstr0:"+getAngle(r0,firstR0)+90);
             if (count > oldCount) {
                 //第一次落棒

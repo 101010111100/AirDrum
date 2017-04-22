@@ -328,7 +328,7 @@ static void ComputeQuaternions(void)
   SensorAxesRaw_t ACC_Value_Raw;
   SensorAxes_t GYR_Value;
   SensorAxes_t MAG_Value;
-
+  
   /* Increment the Counter */
   if(W2ST_CHECK_CONNECTION(W2ST_CONNECT_EC)) {
     CounterEC++;
@@ -347,6 +347,7 @@ static void ComputeQuaternions(void)
 
   MotionFX_manager_run(ACC_Value_Raw,GYR_Value,MAG_Value);
      
+  
   //需关闭校准，否则传感器板子受大力后会无数据输出一段时间
 
 //  /* Check if is calibrated */
@@ -427,21 +428,26 @@ static void ComputeQuaternions(void)
 
     int32_t y = ((int32_t)(MotionFX_Engine_Out->rotation_9X[2] * 100));
     int32_t z = ((int32_t)(MotionFX_Engine_Out->rotation_9X[0] * 100));
-    STORE_LE_16(buff+0,drumCount);
-    STORE_LE_16(buff+2,y);
-    STORE_LE_16(buff+4,z);
-    UpdateAdv(buff,6);
-    /*
-    if(x > 30000)
-    {
-      peek = 1;
-    }else if(x < 10000 && peek == 1)
-    {
-      peek = 0;
-      drumCount++;
-    }
-   */
-   drumCount += PeakCounter(((int32_t)(MotionFX_Engine_Out->rotation_9X[2] * 100)),100,6,250);
+    
+    
+    uint8_t* uid = (uint8_t *)UID_BASE;
+    //复制唯一ID
+    memcpy(buff,uid+6,6);
+    
+    STORE_LE_16(buff+6+0,drumCount);
+    STORE_LE_16(buff+6+2,y);
+    STORE_LE_16(buff+6+4,z);
+    
+    buff[6+4+2] = 'a';
+    buff[6+4+3] = 'i';
+    buff[6+4+4] = 'r';
+    buff[6+4+5] = 'd';
+    buff[6+4+6] = 'r';
+    buff[6+4+7] = 'u';
+    buff[6+4+8] = 'm';
+    UpdateAdv(buff,6+6+7);
+    
+    drumCount += PeakCounter(((int32_t)(MotionFX_Engine_Out->rotation_9X[2] * 100)),100,6,250);
 #ifdef OSX_BMS_ENABLE_PRINTF
 /*
       OSX_BMS_PRINTF("%d\t%d\t%d\t%d\t%d\t%d\t%d\r\n",
